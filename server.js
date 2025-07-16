@@ -1,121 +1,58 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+
 const app = express();
-
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json());
-
-// Serve arquivos estáticos da pasta 'public' (inclui index.html)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Arquivo JSON com as mensagens
+const PORT = process.env.PORT || 10000;
 const DATA_FILE = path.join(__dirname, 'data', 'mensagens.json');
 
-// Rota raiz que serve o index.html explicitamente (opcional)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Rota raiz - serve index.html da pasta public
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Buscar mensagem pelo atalho exato
+// API que retorna mensagem pelo atalho exato (antiga)
 app.get('/api/mensagem/:atalho', (req, res) => {
-  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
-
-    let mensagens = {};
-    try {
-      mensagens = JSON.parse(data);
-    } catch (parseErr) {
-      return res.status(500).json({ error: 'Erro ao processar mensagens' });
-    }
-
-    const atalho = req.params.atalho;
-    const mensagem = mensagens[atalho];
-
-    if (mensagem) {
-      res.json({ mensagem });
-    } else {
-      res.status(404).json({ error: 'Mensagem não encontrada' });
-    }
-  });
-});
-
-// Busca flexível - retorna todos os atalhos que contenham o texto pesquisado
-app.get('/api/mensagens/buscar/:query', (req, res) => {
-  const query = req.params.query.toLowerCase();
+  const atalho = req.params.atalho.toLowerCase();
 
   fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
+    if (err) {
+      console.error('Erro ao ler arquivo de mensagens:', err);
+      return res.status(500).json({ error: 'Erro ao ler mensagens' });
+    }
 
-    let mensagens = {};
+    let mensagens;
     try {
       mensagens = JSON.parse(data);
     } catch {
       return res.status(500).json({ error: 'Erro ao processar mensagens' });
     }
 
-    const resultados = Object.keys(mensagens)
-      .filter(atalho => atalho.toLowerCase().includes(query))
-      .map(atalho => ({ atalho, mensagem: mensagens[atalho] }));
+    const mensagem = mensagens[atalho];
+    if (!mensagem) {
+      return res.status(404).json({ error: 'Mensagem não encontrada para o atalho informado' });
+    }
 
-    res.json(resultados);
+    res.json({ mensagem });
   });
 });
 
-// Adicionar nova mensagem
-app.post('/api/mensagem', (req, res) => {
-  const { atalho, mensagem } = req.body;
-
-  if (!atalho || !mensagem) {
-    return res.status(400).json({ error: 'atalho e mensagem são obrigatórios' });
-  }
-
+// NOVA rota para retornar todas as mensagens (para busca flexível no frontend)
+app.get('/api/mensagem', (req, res) => {
   fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
-
+    if (err) {
+      console.error('Erro ao ler arquivo de mensagens:', err);
+      return res.status(500).json({ error: 'Erro ao ler mensagens' });
+    }
     let mensagens = {};
     try {
       mensagens = JSON.parse(data);
-    } catch (parseErr) {
+    } catch {
       return res.status(500).json({ error: 'Erro ao processar mensagens' });
     }
-
-    mensagens[atalho] = mensagem;
-
-    fs.writeFile(DATA_FILE, JSON.stringify(mensagens, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: 'Erro ao salvar mensagem' });
-
-      res.json({ message: 'Mensagem salva com sucesso' });
-    });
-  });
-});
-
-// Deletar um atalho
-app.delete('/api/mensagem/:atalho', (req, res) => {
-  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
-
-    let mensagens = {};
-    try {
-      mensagens = JSON.parse(data);
-    } catch (parseErr) {
-      return res.status(500).json({ error: 'Erro ao processar mensagens' });
-    }
-
-    const atalho = req.params.atalho;
-
-    if (!(atalho in mensagens)) {
-      return res.status(404).json({ error: 'Atalho não encontrado' });
-    }
-
-    delete mensagens[atalho];
-
-    fs.writeFile(DATA_FILE, JSON.stringify(mensagens, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: 'Erro ao salvar mensagens' });
-
-      res.json({ message: 'Atalho deletado com sucesso' });
-    });
+    res.json(mensagens);
   });
 });
 
