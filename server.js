@@ -10,15 +10,15 @@ app.use(express.json());
 // Serve arquivos estáticos da pasta 'public' (inclui index.html)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Caminho para o arquivo JSON com as mensagens
+// Arquivo JSON com as mensagens
 const DATA_FILE = path.join(__dirname, 'data', 'mensagens.json');
 
-// Rota raiz para servir o index.html explicitamente (opcional)
+// Rota raiz que serve o index.html explicitamente (opcional)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Buscar mensagem pelo atalho
+// Buscar mensagem pelo atalho exato
 app.get('/api/mensagem/:atalho', (req, res) => {
   fs.readFile(DATA_FILE, 'utf8', (err, data) => {
     if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
@@ -26,7 +26,7 @@ app.get('/api/mensagem/:atalho', (req, res) => {
     let mensagens = {};
     try {
       mensagens = JSON.parse(data);
-    } catch {
+    } catch (parseErr) {
       return res.status(500).json({ error: 'Erro ao processar mensagens' });
     }
 
@@ -38,6 +38,28 @@ app.get('/api/mensagem/:atalho', (req, res) => {
     } else {
       res.status(404).json({ error: 'Mensagem não encontrada' });
     }
+  });
+});
+
+// Busca flexível - retorna todos os atalhos que contenham o texto pesquisado
+app.get('/api/mensagens/buscar/:query', (req, res) => {
+  const query = req.params.query.toLowerCase();
+
+  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
+
+    let mensagens = {};
+    try {
+      mensagens = JSON.parse(data);
+    } catch {
+      return res.status(500).json({ error: 'Erro ao processar mensagens' });
+    }
+
+    const resultados = Object.keys(mensagens)
+      .filter(atalho => atalho.toLowerCase().includes(query))
+      .map(atalho => ({ atalho, mensagem: mensagens[atalho] }));
+
+    res.json(resultados);
   });
 });
 
@@ -55,7 +77,7 @@ app.post('/api/mensagem', (req, res) => {
     let mensagens = {};
     try {
       mensagens = JSON.parse(data);
-    } catch {
+    } catch (parseErr) {
       return res.status(500).json({ error: 'Erro ao processar mensagens' });
     }
 
@@ -77,7 +99,7 @@ app.delete('/api/mensagem/:atalho', (req, res) => {
     let mensagens = {};
     try {
       mensagens = JSON.parse(data);
-    } catch {
+    } catch (parseErr) {
       return res.status(500).json({ error: 'Erro ao processar mensagens' });
     }
 
