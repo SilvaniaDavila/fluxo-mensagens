@@ -47,6 +47,37 @@ app.get('/api/atalhos/:prefixo', (req, res) => {
   });
 });
 
+// Rota para adicionar novo atalho
+app.post('/api/atalho', (req, res) => {
+  const { atalho, mensagem } = req.body;
+  if (!atalho || !mensagem) {
+    return res.status(400).json({ error: 'Atalho e mensagem são obrigatórios' });
+  }
+
+  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
+    let mensagens = {};
+    if (!err) {
+      try {
+        mensagens = JSON.parse(data);
+      } catch {
+        return res.status(500).json({ error: 'Erro ao processar mensagens' });
+      }
+    }
+
+    const chave = atalho.toLowerCase();
+    if (mensagens[chave]) {
+      return res.status(409).json({ error: 'Atalho já existe' });
+    }
+
+    mensagens[chave] = mensagem;
+
+    fs.writeFile(DATA_FILE, JSON.stringify(mensagens, null, 2), 'utf8', err => {
+      if (err) return res.status(500).json({ error: 'Erro ao salvar mensagem' });
+      res.json({ sucesso: true, atalho: chave });
+    });
+  });
+});
+
 // Rota padrão para abrir index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
