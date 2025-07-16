@@ -1,77 +1,77 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Fluxo de Mensagens</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px auto;
-    max-width: 480px;
-    background: #f0f4f8;
-    color: #333;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  }
-  h2 {
-    color: #007bff;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 5px;
-  }
-  input, textarea {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    border: 1.5px solid #ccc;
-    border-radius: 6px;
-    font-size: 1rem;
-    box-sizing: border-box;
-    transition: border-color 0.3s;
-  }
-  input:focus, textarea:focus {
-    border-color: #007bff;
-    outline: none;
-  }
-  button {
-    background-color: #007bff;
-    color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 6px;
-    padding: 12px;
-    margin-top: 15px;
-    width: 100%;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  button:hover {
-    background-color: #0056b3;
-  }
-  .resultado {
-    margin-top: 20px;
-    border: 1.5px solid #007bff;
-    background-color: white;
-    padding: 15px;
-    border-radius: 8px;
-    min-height: 80px;
-    white-space: pre-wrap;
-    font-size: 1rem;
-  }
-  hr {
-    margin: 40px 0 30px;
-    border: none;
-    border-top: 1px solid #ccc;
-  }
-  #msgRenomear {
-    margin-top: 10px;
-    color: green;
-    font-weight: bold;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fluxo de Mensagens</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px auto;
+      max-width: 480px;
+      background: #f0f4f8;
+      color: #333;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #007bff;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 5px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: 1.5px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+    input:focus, textarea:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 15px;
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .resultado {
+      margin-top: 20px;
+      border: 1.5px solid #007bff;
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      min-height: 80px;
+      white-space: pre-wrap;
+      font-size: 1rem;
+    }
+    hr {
+      margin: 40px 0 30px;
+      border: none;
+      border-top: 1px solid #ccc;
+    }
+    #msgRenomear {
+      margin-top: 10px;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
@@ -107,8 +107,7 @@ async function buscarMensagem() {
   const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
   if (res.ok) {
     const data = await res.json();
-    const resultadoDiv = document.getElementById('resultado');
-    resultadoDiv.innerHTML = data.mensagem;
+    document.getElementById('resultado').innerHTML = data.mensagem;
   } else {
     alert('Mensagem não encontrada');
   }
@@ -142,8 +141,7 @@ async function renomearAtalho() {
     alert('Preencha os dois atalhos');
     return;
   }
-  
-  // Buscar a mensagem do atalho antigo
+
   const resGet = await fetch('/api/mensagem/' + encodeURIComponent(antigo));
   if (!resGet.ok) {
     alert('Atalho antigo não encontrado');
@@ -152,7 +150,6 @@ async function renomearAtalho() {
   const data = await resGet.json();
   const mensagem = data.mensagem;
 
-  // Criar o novo atalho com a mensagem
   const resPost = await fetch('/api/mensagem', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -163,7 +160,6 @@ async function renomearAtalho() {
     return;
   }
 
-  // Deletar o atalho antigo
   const resDel = await fetch('/api/mensagem/' + encodeURIComponent(antigo), {
     method: 'DELETE'
   });
