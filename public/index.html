@@ -158,4 +158,292 @@
     <div id="msgAdicionar" style="margin-top:10px;color:green;"></div>
   </section>
 
-  <!-- Alterar
+  <!-- Alterar -->
+  <section id="alterar">
+    <label for="altAtalho">Atalho existente:</label>
+    <input id="altAtalho" placeholder="Digite o atalho para alterar" autocomplete="off" oninput="buscarSugestoesAlterar()" />
+    <div id="listaSugestoesAlterar" style="position:relative;"></div>
+    <label for="altMensagem">Nova mensagem:</label>
+    <textarea id="altMensagem" rows="4" placeholder="Digite a nova mensagem aqui..."></textarea>
+    <button onclick="alterarAtalho()">Alterar Mensagem</button>
+    <div id="msgAlterar" style="margin-top:10px;color:green;"></div>
+  </section>
+
+  <!-- Renomear -->
+  <section id="renomear">
+    <label for="renAtalhoAntigo">Atalho antigo:</label>
+    <input id="renAtalhoAntigo" placeholder="Digite o atalho antigo" autocomplete="off" />
+    <label for="renAtalhoNovo">Atalho novo:</label>
+    <input id="renAtalhoNovo" placeholder="Digite o novo atalho" />
+    <button onclick="renomearAtalho()">Renomear Atalho</button>
+    <div id="msgRenomear" style="margin-top:10px;color:green;"></div>
+  </section>
+
+  <script>
+    function mostrarSecao(id) {
+      document.querySelectorAll('section').forEach(sec => {
+        sec.classList.remove('active');
+      });
+      document.getElementById(id).classList.add('active');
+      limparMensagens();
+    }
+
+    function limparMensagens() {
+      document.getElementById('resultado').textContent = '';
+      document.getElementById('msgAdicionar').textContent = '';
+      document.getElementById('msgAlterar').textContent = '';
+      document.getElementById('msgRenomear').textContent = '';
+    }
+
+    // --- PESQUISAR ---
+    async function buscarSugestoes() {
+      const input = document.getElementById('inputAtalho');
+      const val = input.value.trim();
+      const lista = document.getElementById('listaSugestoes');
+      const resultado = document.getElementById('resultado');
+      resultado.textContent = '';
+
+      if (val.length === 0) {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/atalhos/' + encodeURIComponent(val));
+        if (res.ok) {
+          const data = await res.json();
+          if (data.atalhos.length > 0) {
+            lista.style.display = 'block';
+            lista.innerHTML = '';
+            data.atalhos.forEach(atalho => {
+              const div = document.createElement('div');
+              div.textContent = atalho;
+              div.onclick = () => {
+                input.value = atalho;
+                lista.style.display = 'none';
+                buscarMensagem();
+              };
+              lista.appendChild(div);
+            });
+          } else {
+            lista.style.display = 'none';
+            lista.innerHTML = '';
+          }
+        } else {
+          lista.style.display = 'none';
+          lista.innerHTML = '';
+        }
+      } catch {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+      }
+    }
+
+    async function buscarMensagem() {
+      const input = document.getElementById('inputAtalho');
+      const atalho = input.value.trim();
+      const resultado = document.getElementById('resultado');
+
+      if (atalho.length === 0) {
+        resultado.textContent = '';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
+        if (res.ok) {
+          const data = await res.json();
+          mostrarMensagem(data.mensagem);
+        } else {
+          resultado.textContent = 'Atalho não encontrado.';
+        }
+      } catch {
+        resultado.textContent = 'Erro ao buscar mensagem.';
+      }
+    }
+
+    function mostrarMensagem(texto) {
+      const resultado = document.getElementById('resultado');
+      resultado.textContent = texto;
+
+      // Remove botão copiar anterior se existir
+      const btnExistente = document.querySelector('.btn-copy');
+      if (btnExistente) btnExistente.remove();
+
+      // Criar botão copiar
+      const btnCopy = document.createElement('button');
+      btnCopy.textContent = 'Copiar';
+      btnCopy.className = 'btn-copy';
+      btnCopy.onclick = () => {
+        navigator.clipboard.writeText(texto).then(() => {
+          btnCopy.textContent = 'Copiado!';
+          setTimeout(() => btnCopy.textContent = 'Copiar', 2000);
+        });
+      };
+
+      resultado.appendChild(btnCopy);
+    }
+
+    // --- ADICIONAR ---
+    async function adicionarAtalho() {
+      const atalho = document.getElementById('addAtalho').value.trim();
+      const mensagem = document.getElementById('addMensagem').value.trim();
+      const msg = document.getElementById('msgAdicionar');
+      msg.style.color = 'red';
+
+      if (!atalho || !mensagem) {
+        msg.textContent = 'Preencha o atalho e a mensagem.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/atalho', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ atalho, mensagem })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          msg.style.color = 'green';
+          msg.textContent = `Atalho "${data.atalho}" adicionado com sucesso!`;
+          document.getElementById('addAtalho').value = '';
+          document.getElementById('addMensagem').value = '';
+        } else {
+          msg.textContent = data.error || 'Erro ao adicionar atalho.';
+        }
+      } catch {
+        msg.textContent = 'Erro ao adicionar atalho.';
+      }
+    }
+
+    // --- ALTERAR ---
+    async function buscarSugestoesAlterar() {
+      const input = document.getElementById('altAtalho');
+      const val = input.value.trim();
+      const lista = document.getElementById('listaSugestoesAlterar');
+      const msg = document.getElementById('msgAlterar');
+      msg.textContent = '';
+
+      if (val.length === 0) {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/atalhos/' + encodeURIComponent(val));
+        if (res.ok) {
+          const data = await res.json();
+          if (data.atalhos.length > 0) {
+            lista.style.display = 'block';
+            lista.innerHTML = '';
+            data.atalhos.forEach(atalho => {
+              const div = document.createElement('div');
+              div.textContent = atalho;
+              div.style.padding = '6px 8px';
+              div.style.cursor = 'pointer';
+              div.onmouseenter = () => div.style.backgroundColor = '#007bff20';
+              div.onmouseleave = () => div.style.backgroundColor = 'transparent';
+              div.onclick = () => {
+                input.value = atalho;
+                lista.style.display = 'none';
+                // Puxa a mensagem para o campo texto para alterar
+                buscarMensagemAlterar(atalho);
+              };
+              lista.appendChild(div);
+            });
+          } else {
+            lista.style.display = 'none';
+            lista.innerHTML = '';
+          }
+        } else {
+          lista.style.display = 'none';
+          lista.innerHTML = '';
+        }
+      } catch {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+      }
+    }
+
+    async function buscarMensagemAlterar(atalho) {
+      const campoMensagem = document.getElementById('altMensagem');
+      campoMensagem.value = '';
+      try {
+        const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
+        if (res.ok) {
+          const data = await res.json();
+          campoMensagem.value = data.mensagem;
+        }
+      } catch {}
+    }
+
+    async function alterarAtalho() {
+      const atalho = document.getElementById('altAtalho').value.trim();
+      const mensagem = document.getElementById('altMensagem').value.trim();
+      const msg = document.getElementById('msgAlterar');
+      msg.style.color = 'red';
+
+      if (!atalho || !mensagem) {
+        msg.textContent = 'Preencha o atalho e a nova mensagem.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/atalho', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ atalho, mensagem })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          msg.style.color = 'green';
+          msg.textContent = `Atalho "${atalho}" alterado com sucesso!`;
+          document.getElementById('altAtalho').value = '';
+          document.getElementById('altMensagem').value = '';
+        } else {
+          msg.textContent = data.error || 'Erro ao alterar atalho.';
+        }
+      } catch {
+        msg.textContent = 'Erro ao alterar atalho.';
+      }
+    }
+
+    // --- RENOMEAR ---
+    async function renomearAtalho() {
+      const antigo = document.getElementById('renAtalhoAntigo').value.trim();
+      const novo = document.getElementById('renAtalhoNovo').value.trim();
+      const msg = document.getElementById('msgRenomear');
+      msg.style.color = 'red';
+
+      if (!antigo || !novo) {
+        msg.textContent = 'Preencha o atalho antigo e o novo.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/atalho', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ atalhoAntigo: antigo, atalhoNovo: novo })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          msg.style.color = 'green';
+          msg.textContent = `Atalho renomeado de "${antigo}" para "${novo}" com sucesso!`;
+          document.getElementById('renAtalhoAntigo').value = '';
+          document.getElementById('renAtalhoNovo').value = '';
+        } else {
+          msg.textContent = data.error || 'Erro ao renomear atalho.';
+        }
+      } catch {
+        msg.textContent = 'Erro ao renomear atalho.';
+      }
+    }
+  </script>
+</body>
+</html>
