@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fluxo de Mensagens</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px auto;
+    max-width: 480px;
+    background: #f0f4f8;
+    color: #333;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  }
+  h2 {
+    color: #007bff;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+  }
+  input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+  }
+  input:focus, textarea:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+  button {
+    background-color: #007bff;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 15px;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  .resultado {
+    margin-top: 20px;
+    border: 1.5px solid #007bff;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    min-height: 80px;
+    white-space: pre-wrap;
+    font-size: 1rem;
+  }
+  hr {
+    margin: 40px 0 30px;
+    border: none;
+    border-top: 1px solid #ccc;
+  }
+  #msgRenomear {
+    margin-top: 10px;
+    color: green;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<h2>Pesquisar mensagem por atalho</h2>
+<input id="inputAtalho" placeholder="Digite o atalho" />
+<button onclick="buscarMensagem()">Buscar</button>
+
+<div class="resultado" id="resultado"></div>
+
+<hr />
+
+<h2>Adicionar nova mensagem</h2>
+<input id="novoAtalho" placeholder="Novo atalho" />
+<textarea id="novaMensagem" placeholder="Nova mensagem (pode usar HTML)"></textarea>
+<button onclick="adicionarMensagem()">Adicionar</button>
+
+<hr />
+
+<h2>Renomear atalho</h2>
+<input id="atalhoAntigo" placeholder="Atalho antigo" />
+<input id="atalhoNovo" placeholder="Novo atalho" />
+<button onclick="renomearAtalho()">Renomear</button>
+
+<div id="msgRenomear"></div>
+
+<script>
+async function buscarMensagem() {
+  const atalho = document.getElementById('inputAtalho').value.trim();
+  if (!atalho) {
+    alert('Digite um atalho');
+    return;
+  }
+  const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
+  if (res.ok) {
+    const data = await res.json();
+    const resultadoDiv = document.getElementById('resultado');
+    resultadoDiv.innerHTML = data.mensagem;
+  } else {
+    alert('Mensagem não encontrada');
+  }
+}
+
+async function adicionarMensagem() {
+  const atalho = document.getElementById('novoAtalho').value.trim();
+  const mensagem = document.getElementById('novaMensagem').value.trim();
+  if (!atalho || !mensagem) {
+    alert('Preencha atalho e mensagem');
+    return;
+  }
+  const res = await fetch('/api/mensagem', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ atalho, mensagem })
+  });
+  if (res.ok) {
+    alert('Mensagem adicionada com sucesso!');
+    document.getElementById('novoAtalho').value = '';
+    document.getElementById('novaMensagem').value = '';
+  } else {
+    alert('Erro ao adicionar mensagem');
+  }
+}
+
+async function renomearAtalho() {
+  const antigo = document.getElementById('atalhoAntigo').value.trim();
+  const novo = document.getElementById('atalhoNovo').value.trim();
+  if (!antigo || !novo) {
+    alert('Preencha os dois atalhos');
+    return;
+  }
+  
+  // Buscar a mensagem do atalho antigo
+  const resGet = await fetch('/api/mensagem/' + encodeURIComponent(antigo));
+  if (!resGet.ok) {
+    alert('Atalho antigo não encontrado');
+    return;
+  }
+  const data = await resGet.json();
+  const mensagem = data.mensagem;
+
+  // Criar o novo atalho com a mensagem
+  const resPost = await fetch('/api/mensagem', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ atalho: novo, mensagem })
+  });
+  if (!resPost.ok) {
+    alert('Erro ao criar novo atalho');
+    return;
+  }
+
+  // Deletar o atalho antigo
+  const resDel = await fetch('/api/mensagem/' + encodeURIComponent(antigo), {
+    method: 'DELETE'
+  });
+  if (!resDel.ok) {
+    alert('Erro ao deletar atalho antigo');
+    return;
+  }
+
+  document.getElementById('msgRenomear').textContent = 'Atalho renomeado com sucesso!';
+  document.getElementById('atalhoAntigo').value = '';
+  document.getElementById('atalhoNovo').value = '';
+}
+</script>
+
+</body>
+</html>
