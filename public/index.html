@@ -30,6 +30,7 @@
       font-size: 1rem;
       box-sizing: border-box;
       transition: border-color 0.3s;
+      resize: vertical;
     }
     input:focus, textarea:focus {
       border-color: #007bff;
@@ -53,7 +54,7 @@
     }
     .campo-container {
       position: relative;
-      margin-bottom: 20px; /* espaço maior para sugestões */
+      margin-bottom: 20px;
     }
     #listaSugestoes {
       border: 1px solid #007bff;
@@ -66,7 +67,7 @@
       position: absolute;
       width: 100%;
       z-index: 10;
-      top: 100%; /* logo abaixo do input */
+      top: 100%;
       left: 0;
     }
     #listaSugestoes div {
@@ -80,7 +81,7 @@
       margin-top: 10px;
       border: 1.5px solid #007bff;
       background-color: white;
-      padding: 15px 50px 15px 15px; /* espaço para o botão */
+      padding: 15px 50px 15px 15px;
       border-radius: 8px;
       min-height: 80px;
       white-space: pre-wrap;
@@ -104,105 +105,57 @@
     .btn-copy:hover {
       background-color: #1e7e34;
     }
+    nav {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+    nav button {
+      width: auto;
+      padding: 10px 20px;
+      margin: 0 5px;
+      font-size: 1rem;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <h2>Pesquisa de Mensagens</h2>
-  <div class="campo-container">
-    <input id="inputAtalho" placeholder="Digite o atalho..." autocomplete="off" oninput="buscarSugestoes()" />
-    <div id="listaSugestoes"></div>
-  </div>
-  <div class="resultado" id="resultado"></div>
+  <h2>Fluxo de Mensagens</h2>
 
-  <script>
-    async function buscarSugestoes() {
-      const input = document.getElementById('inputAtalho');
-      const val = input.value.trim();
-      const lista = document.getElementById('listaSugestoes');
-      const resultado = document.getElementById('resultado');
-      resultado.textContent = '';
+  <nav>
+    <button onclick="mostrarSecao('pesquisar')">Pesquisar</button>
+    <button onclick="mostrarSecao('adicionar')">Adicionar</button>
+    <button onclick="mostrarSecao('alterar')">Alterar</button>
+    <button onclick="mostrarSecao('renomear')">Renomear</button>
+  </nav>
 
-      if(val.length === 0) {
-        lista.style.display = 'none';
-        lista.innerHTML = '';
-        return;
-      }
+  <!-- Pesquisar -->
+  <section id="pesquisar" class="active">
+    <div class="campo-container">
+      <input id="inputAtalho" placeholder="Digite o atalho para pesquisar..." autocomplete="off" oninput="buscarSugestoes()" />
+      <div id="listaSugestoes"></div>
+    </div>
+    <div class="resultado" id="resultado"></div>
+  </section>
 
-      try {
-        const res = await fetch('/api/atalhos/' + encodeURIComponent(val));
-        if(res.ok) {
-          const data = await res.json();
-          if(data.atalhos.length > 0) {
-            lista.style.display = 'block';
-            lista.innerHTML = '';
-            data.atalhos.forEach(atalho => {
-              const div = document.createElement('div');
-              div.textContent = atalho;
-              div.onclick = () => {
-                input.value = atalho;
-                lista.style.display = 'none';
-                buscarMensagem();
-              };
-              lista.appendChild(div);
-            });
-          } else {
-            lista.style.display = 'none';
-            lista.innerHTML = '';
-          }
-        } else {
-          lista.style.display = 'none';
-          lista.innerHTML = '';
-        }
-      } catch {
-        lista.style.display = 'none';
-        lista.innerHTML = '';
-      }
-    }
+  <!-- Adicionar -->
+  <section id="adicionar">
+    <label for="addAtalho">Novo atalho:</label>
+    <input id="addAtalho" placeholder="Ex: agradecimento_olx" />
+    <label for="addMensagem">Mensagem:</label>
+    <textarea id="addMensagem" rows="4" placeholder="Digite a mensagem aqui..."></textarea>
+    <button onclick="adicionarAtalho()">Adicionar Atalho</button>
+    <div id="msgAdicionar" style="margin-top:10px;color:green;"></div>
+  </section>
 
-    async function buscarMensagem() {
-      const input = document.getElementById('inputAtalho');
-      const atalho = input.value.trim();
-      const resultado = document.getElementById('resultado');
-
-      if (atalho.length === 0) {
-        resultado.textContent = '';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
-        if(res.ok) {
-          const data = await res.json();
-          mostrarMensagem(data.mensagem);
-        } else {
-          resultado.textContent = 'Atalho não encontrado.';
-        }
-      } catch {
-        resultado.textContent = 'Erro ao buscar mensagem.';
-      }
-    }
-
-    function mostrarMensagem(texto) {
-      const resultado = document.getElementById('resultado');
-      resultado.textContent = texto;
-
-      // Remove botão copiar anterior se existir
-      const btnExistente = document.querySelector('.btn-copy');
-      if(btnExistente) btnExistente.remove();
-
-      // Criar botão copiar
-      const btnCopy = document.createElement('button');
-      btnCopy.textContent = 'Copiar';
-      btnCopy.className = 'btn-copy';
-      btnCopy.onclick = () => {
-        navigator.clipboard.writeText(texto).then(() => {
-          btnCopy.textContent = 'Copiado!';
-          setTimeout(() => btnCopy.textContent = 'Copiar', 2000);
-        });
-      };
-
-      resultado.appendChild(btnCopy);
-    }
-  </script>
-</body>
-</html>
+  <!-- Alterar
