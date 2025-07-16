@@ -1,200 +1,205 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Fluxo de Mensagens</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px auto;
-    max-width: 480px;
-    background: #f0f4f8;
-    color: #333;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  }
-  h2 {
-    color: #007bff;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 5px;
-  }
-  input, textarea {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    border: 1.5px solid #ccc;
-    border-radius: 6px;
-    font-size: 1rem;
-    box-sizing: border-box;
-    transition: border-color 0.3s;
-  }
-  input:focus, textarea:focus {
-    border-color: #007bff;
-    outline: none;
-  }
-  button {
-    background-color: #007bff;
-    color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 6px;
-    padding: 12px;
-    margin-top: 15px;
-    width: 100%;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  button:hover {
-    background-color: #0056b3;
-  }
-  .resultado {
-    margin-top: 20px;
-    border: 1.5px solid #007bff;
-    background-color: white;
-    padding: 15px;
-    border-radius: 8px;
-    min-height: 80px;
-    white-space: pre-wrap;
-    font-size: 1rem;
-  }
-  #msgRenomear {
-    margin-top: 10px;
-    color: green;
-    font-weight: bold;
-  }
-  #btnCopiar {
-    display: none;
-    margin-top: 10px;
-    background-color: #28a745;
-  }
-  #btnCopiar:hover {
-    background-color: #1e7e34;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fluxo de Mensagens</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px auto;
+      max-width: 480px;
+      background: #f0f4f8;
+      color: #333;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #007bff;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 5px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: 1.5px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+    input:focus, textarea:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 15px;
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .resultado {
+      margin-top: 20px;
+      border: 1.5px solid #007bff;
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      min-height: 80px;
+      white-space: pre-wrap;
+      font-size: 1rem;
+      position: relative;
+    }
+    #listaSugestoes {
+      border: 1px solid #007bff;
+      border-radius: 6px;
+      max-height: 120px;
+      overflow-y: auto;
+      display: none;
+      margin-top: 4px;
+      background: #fff;
+      position: absolute;
+      width: 100%;
+      z-index: 10;
+    }
+    #listaSugestoes div {
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+    #listaSugestoes div:hover {
+      background-color: #007bff20;
+    }
+    .btn-copy {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
+    }
+    .btn-copy:hover {
+      background-color: #1e7e34;
+    }
+    .campo-container {
+      position: relative;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
+  <h2>Pesquisa de Mensagens</h2>
+  <div class="campo-container">
+    <input id="inputAtalho" placeholder="Digite o atalho..." autocomplete="off" oninput="buscarSugestoes()" />
+    <div id="listaSugestoes"></div>
+  </div>
+  <div class="resultado" id="resultado"></div>
 
-<h2>Pesquisar mensagem por atalho</h2>
-<input id="inputAtalho" placeholder="Digite o atalho" />
-<button onclick="buscarMensagem()">Buscar</button>
+  <script>
+    async function buscarSugestoes() {
+      const input = document.getElementById('inputAtalho');
+      const val = input.value.trim();
+      const lista = document.getElementById('listaSugestoes');
+      const resultado = document.getElementById('resultado');
+      resultado.textContent = '';
 
-<div class="resultado" id="resultado"></div>
-<button id="btnCopiar" onclick="copiarMensagem()">Copiar mensagem</button>
+      if(val.length === 0) {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+        return;
+      }
 
-<hr />
+      try {
+        const res = await fetch('/api/atalhos/' + encodeURIComponent(val));
+        if(res.ok) {
+          const data = await res.json();
+          if(data.atalhos.length > 0) {
+            lista.style.display = 'block';
+            lista.innerHTML = '';
+            data.atalhos.forEach(atalho => {
+              const div = document.createElement('div');
+              div.textContent = atalho;
+              div.onclick = () => {
+                input.value = atalho;
+                lista.style.display = 'none';
+                buscarMensagem();
+              };
+              lista.appendChild(div);
+            });
+          } else {
+            lista.style.display = 'none';
+            lista.innerHTML = '';
+          }
+        } else {
+          lista.style.display = 'none';
+          lista.innerHTML = '';
+        }
+      } catch {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+      }
+    }
 
-<h2>Adicionar nova mensagem</h2>
-<input id="novoAtalho" placeholder="Novo atalho" />
-<textarea id="novaMensagem" placeholder="Nova mensagem (pode usar HTML)"></textarea>
-<button onclick="adicionarMensagem()">Adicionar</button>
+    async function buscarMensagem() {
+      const input = document.getElementById('inputAtalho');
+      const atalho = input.value.trim();
+      const resultado = document.getElementById('resultado');
 
-<hr />
+      if (atalho.length === 0) {
+        resultado.textContent = '';
+        return;
+      }
 
-<h2>Renomear atalho</h2>
-<input id="atalhoAntigo" placeholder="Atalho antigo" />
-<input id="atalhoNovo" placeholder="Novo atalho" />
-<button onclick="renomearAtalho()">Renomear</button>
+      try {
+        const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
+        if(res.ok) {
+          const data = await res.json();
+          mostrarMensagem(data.mensagem);
+        } else {
+          resultado.textContent = 'Atalho não encontrado.';
+        }
+      } catch {
+        resultado.textContent = 'Erro ao buscar mensagem.';
+      }
+    }
 
-<div id="msgRenomear"></div>
+    function mostrarMensagem(texto) {
+      const resultado = document.getElementById('resultado');
+      resultado.textContent = texto;
 
-<script>
-let mensagemAtual = "";
+      // Remove botão copiar anterior se existir
+      const btnExistente = document.querySelector('.btn-copy');
+      if(btnExistente) btnExistente.remove();
 
-async function buscarMensagem() {
-  const atalho = document.getElementById('inputAtalho').value.trim();
-  if (!atalho) {
-    alert('Digite um atalho');
-    return;
-  }
-  const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
-  if (res.ok) {
-    const data = await res.json();
-    mensagemAtual = data.mensagem;
-    const resultadoDiv = document.getElementById('resultado');
-    resultadoDiv.textContent = mensagemAtual; // só conteúdo, sem atalho
-    document.getElementById('btnCopiar').style.display = 'inline-block';
-  } else {
-    alert('Mensagem não encontrada');
-    mensagemAtual = "";
-    document.getElementById('resultado').textContent = "";
-    document.getElementById('btnCopiar').style.display = 'none';
-  }
-}
+      // Criar botão copiar
+      const btnCopy = document.createElement('button');
+      btnCopy.textContent = 'Copiar';
+      btnCopy.className = 'btn-copy';
+      btnCopy.onclick = () => {
+        navigator.clipboard.writeText(texto).then(() => {
+          btnCopy.textContent = 'Copiado!';
+          setTimeout(() => btnCopy.textContent = 'Copiar', 2000);
+        });
+      };
 
-async function adicionarMensagem() {
-  const atalho = document.getElementById('novoAtalho').value.trim();
-  const mensagem = document.getElementById('novaMensagem').value.trim();
-  if (!atalho || !mensagem) {
-    alert('Preencha atalho e mensagem');
-    return;
-  }
-  const res = await fetch('/api/mensagem', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ atalho, mensagem })
-  });
-  if (res.ok) {
-    alert('Mensagem adicionada com sucesso!');
-    document.getElementById('novoAtalho').value = '';
-    document.getElementById('novaMensagem').value = '';
-  } else {
-    alert('Erro ao adicionar mensagem');
-  }
-}
-
-async function renomearAtalho() {
-  const antigo = document.getElementById('atalhoAntigo').value.trim();
-  const novo = document.getElementById('atalhoNovo').value.trim();
-  if (!antigo || !novo) {
-    alert('Preencha os dois atalhos');
-    return;
-  }
-  
-  // Buscar a mensagem do atalho antigo
-  const resGet = await fetch('/api/mensagem/' + encodeURIComponent(antigo));
-  if (!resGet.ok) {
-    alert('Atalho antigo não encontrado');
-    return;
-  }
-  const data = await resGet.json();
-  const mensagem = data.mensagem;
-
-  // Criar o novo atalho com a mensagem
-  const resPost = await fetch('/api/mensagem', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ atalho: novo, mensagem })
-  });
-  if (!resPost.ok) {
-    alert('Erro ao criar novo atalho');
-    return;
-  }
-
-  // Deletar o atalho antigo
-  const resDel = await fetch('/api/mensagem/' + encodeURIComponent(antigo), {
-    method: 'DELETE'
-  });
-  if (!resDel.ok) {
-    alert('Erro ao deletar atalho antigo');
-    return;
-  }
-
-  document.getElementById('msgRenomear').textContent = 'Atalho renomeado com sucesso!';
-  document.getElementById('atalhoAntigo').value = '';
-  document.getElementById('atalhoNovo').value = '';
-}
-
-function copiarMensagem() {
-  if (!mensagemAtual) return;
-  navigator.clipboard.writeText(mensagemAtual).then(() => {
-    alert('Mensagem copiada para a área de transferência!');
-  });
-}
-</script>
-
+      resultado.appendChild(btnCopy);
+    }
+  </script>
 </body>
 </html>
