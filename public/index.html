@@ -3,78 +3,141 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Fluxo de Mensagens</title>
+<title>Fluxo de Mensagens - Busca Flexível</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px auto; max-width: 480px; background: #f0f4f8; color: #333; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
-  h2 { color: #007bff; margin-bottom: 10px; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
-  input, textarea { width: 100%; padding: 10px; margin-top: 8px; border: 1.5px solid #ccc; border-radius: 6px; font-size: 1rem; box-sizing: border-box; transition: border-color 0.3s; }
-  input:focus, textarea:focus { border-color: #007bff; outline: none; }
-  button { background-color: #007bff; color: white; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 6px; padding: 12px; margin-top: 15px; width: 100%; cursor: pointer; transition: background-color 0.3s; }
-  button:hover { background-color: #0056b3; }
-  .resultado { margin-top: 20px; border: 1.5px solid #007bff; background-color: white; padding: 15px; border-radius: 8px; min-height: 80px; font-size: 1rem; }
-  .msg-item { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #ddd; }
-  .msg-text { white-space: pre-wrap; margin-bottom: 8px; }
-  .copiar-btn { background-color: #28a745; border-radius: 4px; padding: 6px 12px; font-size: 0.9rem; cursor: pointer; border: none; color: white; }
-  .copiar-btn:hover { background-color: #218838; }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px auto;
+    max-width: 480px;
+    background: #f0f4f8;
+    color: #333;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  }
+  h2 {
+    color: #007bff;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+  }
+  input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+  }
+  input:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+  .resultado {
+    margin-top: 20px;
+    border: 1.5px solid #007bff;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    min-height: 100px;
+    font-size: 1rem;
+    white-space: pre-wrap;
+  }
+  .msg-item {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  .atalho {
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 5px;
+  }
+  button.copy-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    float: right;
+    margin-top: -28px;
+  }
+  button.copy-btn:hover {
+    background-color: #0056b3;
+  }
 </style>
 </head>
 <body>
 
-<h2>Pesquisar mensagem por atalho</h2>
-<input id="inputAtalho" placeholder="Digite o início do atalho" />
-<button onclick="buscarMensagem()">Buscar</button>
+<h2>Pesquisar mensagens</h2>
+<input id="inputAtalho" placeholder="Digite parte do atalho..." autocomplete="off" />
 
-<div class="resultado" id="resultado"></div>
+<div class="resultado" id="resultado">Digite para buscar mensagens...</div>
 
 <script>
-async function buscarMensagem() {
-  const busca = document.getElementById('inputAtalho').value.trim().toLowerCase();
-  if (!busca) {
-    alert('Digite o início do atalho para buscar');
-    return;
-  }
-
-  // Buscar todas mensagens do backend
-  const res = await fetch('/api/mensagem');
-  if (!res.ok) {
-    alert('Erro ao buscar mensagens');
-    return;
-  }
-  const todasMensagens = await res.json();
-
-  // Filtra as chaves que começam com o texto buscado (pode ajustar para includes se preferir)
-  const chavesEncontradas = Object.keys(todasMensagens).filter(chave => chave.toLowerCase().startsWith(busca));
-  
+  const input = document.getElementById('inputAtalho');
   const resultadoDiv = document.getElementById('resultado');
-  resultadoDiv.innerHTML = ''; // Limpa resultado
+  let todasMensagens = null;
 
-  if (chavesEncontradas.length === 0) {
-    resultadoDiv.textContent = 'Nenhuma mensagem encontrada para o atalho informado.';
-    return;
+  // Busca as mensagens do backend e guarda localmente
+  async function carregarMensagens() {
+    const res = await fetch('/api/mensagem');
+    if (!res.ok) {
+      resultadoDiv.textContent = 'Erro ao carregar mensagens.';
+      return;
+    }
+    todasMensagens = await res.json();
+    resultadoDiv.textContent = 'Digite para buscar mensagens...';
   }
 
-  // Mostra todas mensagens encontradas
-  chavesEncontradas.forEach(chave => {
-    const mensagem = todasMensagens[chave];
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'msg-item';
-    msgDiv.innerHTML = `
-      <strong>${chave}</strong>
-      <div class="msg-text">${mensagem}</div>
-      <button class="copiar-btn" onclick="copiarTexto(\`${mensagem.replace(/`/g, '\\`')}\`)">Copiar</button>
-    `;
-    resultadoDiv.appendChild(msgDiv);
-  });
-}
+  // Função que filtra e mostra resultados conforme digita
+  function buscarFlexivel() {
+    const termo = input.value.toLowerCase().trim();
+    if (!termo) {
+      resultadoDiv.textContent = 'Digite para buscar mensagens...';
+      return;
+    }
 
-// Função copiar texto para área de transferência
-function copiarTexto(texto) {
-  navigator.clipboard.writeText(texto).then(() => {
-    alert('Mensagem copiada para a área de transferência!');
-  }).catch(() => {
-    alert('Erro ao copiar a mensagem.');
-  });
-}
+    const resultados = Object.entries(todasMensagens || {})
+      .filter(([atalho]) => atalho.toLowerCase().includes(termo));
+
+    if (resultados.length === 0) {
+      resultadoDiv.textContent = 'Nenhuma mensagem encontrada.';
+      return;
+    }
+
+    // Monta os itens HTML com botão de copiar
+    resultadoDiv.innerHTML = resultados.map(([atalho, msg], i) => `
+      <div class="msg-item">
+        <span class="atalho">${atalho}</span>
+        <button class="copy-btn" onclick="copiarMensagem(${i})">Copiar</button>
+        <pre>${msg}</pre>
+      </div>
+    `).join('');
+  }
+
+  // Função para copiar a mensagem pro clipboard
+  function copiarMensagem(index) {
+    const mensagensDiv = resultadoDiv.querySelectorAll('.msg-item pre');
+    if (mensagensDiv[index]) {
+      const texto = mensagensDiv[index].innerText;
+      navigator.clipboard.writeText(texto).then(() => {
+        alert('Mensagem copiada!');
+      }, () => {
+        alert('Falha ao copiar mensagem.');
+      });
+    }
+  }
+
+  // Evento de digitação no campo busca
+  input.addEventListener('input', buscarFlexivel);
+
+  // Carrega as mensagens ao iniciar
+  carregarMensagens();
 </script>
 
 </body>
