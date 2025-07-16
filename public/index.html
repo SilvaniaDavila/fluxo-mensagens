@@ -51,28 +51,23 @@
     button:hover {
       background-color: #0056b3;
     }
-    .resultado {
-      margin-top: 20px;
-      border: 1.5px solid #007bff;
-      background-color: white;
-      padding: 15px;
-      border-radius: 8px;
-      min-height: 80px;
-      white-space: pre-wrap;
-      font-size: 1rem;
+    .campo-container {
       position: relative;
+      margin-bottom: 20px; /* espaço maior para sugestões */
     }
     #listaSugestoes {
       border: 1px solid #007bff;
       border-radius: 6px;
-      max-height: 120px;
+      max-height: 150px;
       overflow-y: auto;
       display: none;
-      margin-top: 4px;
+      margin-top: 2px;
       background: #fff;
       position: absolute;
       width: 100%;
       z-index: 10;
+      top: 100%; /* logo abaixo do input */
+      left: 0;
     }
     #listaSugestoes div {
       padding: 6px 8px;
@@ -81,10 +76,21 @@
     #listaSugestoes div:hover {
       background-color: #007bff20;
     }
+    .resultado {
+      margin-top: 10px;
+      border: 1.5px solid #007bff;
+      background-color: white;
+      padding: 15px 50px 15px 15px; /* espaço para o botão */
+      border-radius: 8px;
+      min-height: 80px;
+      white-space: pre-wrap;
+      font-size: 1rem;
+      position: relative;
+    }
     .btn-copy {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 15px;
+      right: 15px;
       background-color: #28a745;
       border: none;
       color: white;
@@ -93,13 +99,10 @@
       cursor: pointer;
       font-weight: 600;
       transition: background-color 0.3s;
+      user-select: none;
     }
     .btn-copy:hover {
       background-color: #1e7e34;
-    }
-    .campo-container {
-      position: relative;
-      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -110,12 +113,6 @@
     <div id="listaSugestoes"></div>
   </div>
   <div class="resultado" id="resultado"></div>
-
-  <hr />
-  <h2>Adicionar novo atalho</h2>
-  <input id="novoAtalho" type="text" placeholder="Digite o atalho (ex: bomdia)" />
-  <textarea id="novaMensagem" rows="4" placeholder="Digite a mensagem"></textarea>
-  <button id="btnAdicionar">Adicionar Atalho</button>
 
   <script>
     async function buscarSugestoes() {
@@ -206,33 +203,6 @@
 
       resultado.appendChild(btnCopy);
     }
-
-    document.getElementById('btnAdicionar').onclick = async () => {
-      const atalho = document.getElementById('novoAtalho').value.trim();
-      const mensagem = document.getElementById('novaMensagem').value.trim();
-      if (!atalho || !mensagem) {
-        alert('Preencha o atalho e a mensagem!');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/atalho', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ atalho, mensagem })
-        });
-        const data = await res.json();
-        if (res.ok && data.sucesso) {
-          alert('Atalho adicionado com sucesso!');
-          document.getElementById('novoAtalho').value = '';
-          document.getElementById('novaMensagem').value = '';
-        } else {
-          alert('Erro ao adicionar atalho: ' + (data.error || 'desconhecido'));
-        }
-      } catch {
-        alert('Erro na comunicação com o servidor.');
-      }
-    };
   </script>
 </body>
 </html>
