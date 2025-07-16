@@ -111,6 +111,12 @@
   </div>
   <div class="resultado" id="resultado"></div>
 
+  <hr />
+  <h2>Adicionar novo atalho</h2>
+  <input id="novoAtalho" type="text" placeholder="Digite o atalho (ex: bomdia)" />
+  <textarea id="novaMensagem" rows="4" placeholder="Digite a mensagem"></textarea>
+  <button id="btnAdicionar">Adicionar Atalho</button>
+
   <script>
     async function buscarSugestoes() {
       const input = document.getElementById('inputAtalho');
@@ -200,6 +206,33 @@
 
       resultado.appendChild(btnCopy);
     }
+
+    document.getElementById('btnAdicionar').onclick = async () => {
+      const atalho = document.getElementById('novoAtalho').value.trim();
+      const mensagem = document.getElementById('novaMensagem').value.trim();
+      if (!atalho || !mensagem) {
+        alert('Preencha o atalho e a mensagem!');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/atalho', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ atalho, mensagem })
+        });
+        const data = await res.json();
+        if (res.ok && data.sucesso) {
+          alert('Atalho adicionado com sucesso!');
+          document.getElementById('novoAtalho').value = '';
+          document.getElementById('novaMensagem').value = '';
+        } else {
+          alert('Erro ao adicionar atalho: ' + (data.error || 'desconhecido'));
+        }
+      } catch {
+        alert('Erro na comunicação com o servidor.');
+      }
+    };
   </script>
 </body>
 </html>
