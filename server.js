@@ -10,12 +10,13 @@ app.use(express.json());
 // Serve arquivos estáticos da pasta 'public' (inclui index.html)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rota raiz para servir index.html explicitamente (opcional)
+// Caminho para o arquivo JSON com as mensagens
+const DATA_FILE = path.join(__dirname, 'data', 'mensagens.json');
+
+// Rota raiz para servir o index.html explicitamente (opcional)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-const DATA_FILE = path.join(__dirname, 'data', 'mensagens.json');
 
 // Buscar mensagem pelo atalho
 app.get('/api/mensagem/:atalho', (req, res) => {
