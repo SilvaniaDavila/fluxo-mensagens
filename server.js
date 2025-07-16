@@ -1,131 +1,62 @@
-<<<<<<< HEAD
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const app = express();
-
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-const DATA_FILE = path.join(__dirname, 'data', 'mensagens.json');
-
-// Buscar mensagem pelo atalho
-app.get('/api/mensagem/:atalho', (req, res) => {
-  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
-    const mensagens = JSON.parse(data);
-    const atalho = req.params.atalho;
-    const mensagem = mensagens[atalho];
-    if (mensagem) {
-      res.json({ mensagem });
-    } else {
-      res.status(404).json({ error: 'Mensagem não encontrada' });
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fluxo de Mensagens</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px auto;
+      max-width: 480px;
+      background: #f0f4f8;
+      color: #333;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
-  });
-});
-
-// Adicionar nova mensagem
-app.post('/api/mensagem', (req, res) => {
-  const { atalho, mensagem } = req.body;
-  if (!atalho || !mensagem) {
-    return res.status(400).json({ error: 'atalho e mensagem são obrigatórios' });
-  }
-  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
-    const mensagens = JSON.parse(data);
-    mensagens[atalho] = mensagem;
-    fs.writeFile(DATA_FILE, JSON.stringify(mensagens, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: 'Erro ao salvar mensagem' });
-      res.json({ message: 'Mensagem salva com sucesso' });
-    });
-  });
-});
-
-// Deletar um atalho
-app.delete('/api/mensagem/:atalho', (req, res) => {
-  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
-    const mensagens = JSON.parse(data);
-    const atalho = req.params.atalho;
-    if (!(atalho in mensagens)) {
-      return res.status(404).json({ error: 'Atalho não encontrado' });
+    h2 {
+      color: #007bff;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 5px;
     }
-    delete mensagens[atalho];
-    fs.writeFile(DATA_FILE, JSON.stringify(mensagens, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: 'Erro ao salvar mensagens' });
-      res.json({ message: 'Atalho deletado com sucesso' });
-    });
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-});
-=======
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const app = express();
-
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-const DATA_FILE = path.join(__dirname, 'data', 'mensagens.json');
-
-// Buscar mensagem pelo atalho
-app.get('/api/mensagem/:atalho', (req, res) => {
-  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
-    const mensagens = JSON.parse(data);
-    const atalho = req.params.atalho;
-    const mensagem = mensagens[atalho];
-    if (mensagem) {
-      res.json({ mensagem });
-    } else {
-      res.status(404).json({ error: 'Mensagem não encontrada' });
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: 1.5px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
     }
-  });
-});
-
-// Adicionar nova mensagem
-app.post('/api/mensagem', (req, res) => {
-  const { atalho, mensagem } = req.body;
-  if (!atalho || !mensagem) {
-    return res.status(400).json({ error: 'atalho e mensagem são obrigatórios' });
-  }
-  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
-    const mensagens = JSON.parse(data);
-    mensagens[atalho] = mensagem;
-    fs.writeFile(DATA_FILE, JSON.stringify(mensagens, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: 'Erro ao salvar mensagem' });
-      res.json({ message: 'Mensagem salva com sucesso' });
-    });
-  });
-});
-
-// Deletar um atalho
-app.delete('/api/mensagem/:atalho', (req, res) => {
-  fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao ler mensagens' });
-    const mensagens = JSON.parse(data);
-    const atalho = req.params.atalho;
-    if (!(atalho in mensagens)) {
-      return res.status(404).json({ error: 'Atalho não encontrado' });
+    input:focus, textarea:focus {
+      border-color: #007bff;
+      outline: none;
     }
-    delete mensagens[atalho];
-    fs.writeFile(DATA_FILE, JSON.stringify(mensagens, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: 'Erro ao salvar mensagens' });
-      res.json({ message: 'Atalho deletado com sucesso' });
-    });
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-});
->>>>>>> 124186b (Adicionar mensagens e ajustes no fluxo)
+    button {
+      background-color: #007bff;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 15px;
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .resultado {
+      margin-top: 20px;
+      border: 1.5px solid #007bff;
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      min-height: 80px;
+      white-space: pre-wrap;
+      font-size: 1rem;
