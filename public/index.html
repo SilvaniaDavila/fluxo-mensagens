@@ -201,29 +201,21 @@
       const file = input.files[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const linhas = e.target.result.split('\n');
-        const mensagens = getMensagens();
-        let total = 0;
+      const formData = new FormData();
+      formData.append("file", file);
 
-        for (let linha of linhas) {
-          linha = linha.trim();
-          if (!linha) continue;
-
-          const [atalho, ...msg] = linha.split(',');
-          if (!atalho || msg.length === 0) continue;
-
-          mensagens[atalho.trim()] = msg.join(',').trim();
-          total++;
-        }
-
-        salvarMensagens(mensagens);
-        alert(`✅ Importação concluída: ${total} mensagens.`);
+      fetch("/api/importar-csv", {
+        method: "POST",
+        body: formData,
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        alert(`✅ Importação concluída: ${data.total} mensagens.`);
         input.value = '';
-      };
-
-      reader.readAsText(file);
+      })
+      .catch((error) => {
+        alert("Erro na importação: " + error.message);
+      });
     }
 
     function exportarCSV() {

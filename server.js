@@ -1,10 +1,13 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
+const csv = require('csv-parser');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 const DATA_FILE = path.join(__dirname, 'data', 'mensagens.json');
+const upload = multer({ dest: 'uploads/' });  // Pasta temporária para armazenar o arquivo CSV
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -116,6 +119,37 @@ app.patch('/api/atalho', (req, res) => {
   } catch {
     res.status(500).json({ error: 'Erro ao salvar mensagens' });
   }
+});
+
+// Rota para importar CSV
+app.post('/api/importar-csv', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Nenhum arquivo CSV enviado' });
+  }
+
+  const csvFilePath = path.join(__dirname, 'uploads', req.file.filename);
+  const mensagens = lerMensagens();
+  let total = 0;
+
+  fs.createReadStream(csvFilePath)
+    .pipe(csv())
+    .on('data', (row) => {
+      const atalho = row.Altaho.trim();
+      const mensagem = row.Texto.trim();
+
+      if (atalho && mensagem) {
+        mensagens[atalho] = mensagem;
+        total++;
+      }
+    })
+    .on('end', () => {
+      salvarMensagens(mensagens);
+      fs.unlinkSync(csvFilePath);  // Apaga o arquivo temporário após o processamento
+      res.json({ message: 'Importação concluída', total });
+    })
+    .on('error', (err) => {
+      res.status(500).json({ error: 'Erro ao ler o CSV: ' + err.message });
+    });
 });
 
 // Rota padrão para abrir index.html
