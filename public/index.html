@@ -73,6 +73,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      margin-top: 10px;
     }
 
     #resultadoPesquisa {
@@ -102,10 +103,8 @@
       <input id="pesqAtalho" oninput="pesquisarMensagem()" placeholder="Digite o atalho para pesquisar" autocomplete="off" />
       
       <div style="margin-top: 10px;">
-        <textarea id="resultadoPesquisa" rows="4" readonly></textarea>
-        <div style="text-align: center; margin-top: 10px;">
-          <button onclick="copiarMensagem()" class="copiar">Copiar</button>
-        </div>
+        <textarea id="resultadoPesquisa" rows="6" readonly></textarea>
+        <button onclick="copiarMensagem()" class="copiar">Copiar</button>
       </div>
     </section>
 
