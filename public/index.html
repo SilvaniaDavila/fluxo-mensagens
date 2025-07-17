@@ -65,7 +65,7 @@
       border-radius: 5px;
     }
 
-    button.copiar {
+    .copiar {
       background-color: green;
       color: white;
       font-weight: bold;
@@ -144,9 +144,13 @@
         return;
       }
 
-      const res = await fetch(`/api/atalho/${encodeURIComponent(atalho)}`);
-      const data = await res.json();
-      document.getElementById("resultadoPesquisa").value = data.mensagem || "Mensagem não encontrada.";
+      try {
+        const res = await fetch(`/api/atalho/${encodeURIComponent(atalho)}`);
+        const data = await res.json();
+        document.getElementById("resultadoPesquisa").value = data.mensagem || "Mensagem não encontrada.";
+      } catch (err) {
+        document.getElementById("resultadoPesquisa").value = "Erro ao pesquisar.";
+      }
     }
 
     async function adicionarMensagem() {
@@ -183,6 +187,11 @@
 
     function copiarMensagem() {
       const textarea = document.getElementById("resultadoPesquisa");
+      if (!textarea.value.trim()) {
+        alert("Nenhuma mensagem para copiar.");
+        return;
+      }
+
       textarea.select();
       document.execCommand("copy");
       alert("Mensagem copiada!");
