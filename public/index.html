@@ -2,407 +2,193 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fluxo de Mensagens</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px auto;
-      max-width: 480px;
-      background: #f0f4f8;
-      color: #333;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      font-family: sans-serif;
+      background-color: #f2f2f2;
     }
-    h2 {
-      color: #007bff;
-      margin-bottom: 10px;
-      border-bottom: 2px solid #007bff;
-      padding-bottom: 5px;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      border: 1.5px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-      box-sizing: border-box;
-      transition: border-color 0.3s;
-      resize: vertical;
-    }
-    input:focus, textarea:focus {
-      border-color: #007bff;
-      outline: none;
-    }
-    button {
-      background-color: #007bff;
-      color: white;
-      font-size: 1.1rem;
-      font-weight: 600;
-      border: none;
-      border-radius: 6px;
-      padding: 12px;
-      margin-top: 15px;
-      width: 100%;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    .campo-container {
-      position: relative;
-      margin-bottom: 20px;
-    }
-    #listaSugestoes {
-      border: 1px solid #007bff;
-      border-radius: 6px;
-      max-height: 150px;
-      overflow-y: auto;
-      display: none;
-      margin-top: 2px;
-      background: #fff;
-      position: absolute;
-      width: 100%;
-      z-index: 10;
-      top: 100%;
-      left: 0;
-    }
-    #listaSugestoes div {
-      padding: 6px 8px;
-      cursor: pointer;
-    }
-    #listaSugestoes div:hover {
-      background-color: #007bff20;
-    }
-    .resultado {
-      margin-top: 10px;
-      border: 1.5px solid #007bff;
+
+    .container {
       background-color: white;
-      padding: 15px 50px 15px 15px;
-      border-radius: 8px;
-      min-height: 80px;
-      white-space: pre-wrap;
-      font-size: 1rem;
-      position: relative;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
-    .btn-copy {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background-color: #28a745;
-      border: none;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background-color 0.3s;
-      user-select: none;
+
+    h1 {
+      text-align: center;
+      color: #007bff;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
     }
-    .btn-copy:hover {
-      background-color: #1e7e34;
-    }
+
     nav {
       display: flex;
-      justify-content: space-around;
+      justify-content: center;
+      gap: 10px;
       margin-bottom: 20px;
     }
+
     nav button {
-      width: auto;
-      padding: 10px 20px;
-      margin: 0 5px;
-      font-size: 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
     }
+
     section {
       display: none;
     }
+
     section.active {
       display: block;
     }
+
     label {
       font-weight: bold;
-      margin-top: 10px;
       display: block;
+      margin-top: 10px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button.copiar {
+      background-color: green;
+      color: white;
+      font-weight: bold;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #resultadoPesquisa {
+      resize: none;
     }
   </style>
 </head>
 <body>
-  <h2>Fluxo de Mensagens</h2>
+  <div class="container">
+    <h1>Fluxo de Mensagens</h1>
 
-  <nav>
-    <button onclick="mostrarSecao('pesquisar')">Pesquisar</button>
-    <button onclick="mostrarSecao('adicionar')">Adicionar</button>
-    <button onclick="mostrarSecao('alterar')">Alterar</button>
-  </nav>
+    <nav>
+      <button onclick="mostrarSecao('pesquisar')">Pesquisar</button>
+      <button onclick="mostrarSecao('adicionar')">Adicionar</button>
+      <button onclick="mostrarSecao('alterar')">Alterar</button>
+    </nav>
 
-  <div style="margin-bottom: 20px;">
-    <label><strong>Importar CSV:</strong></label>
-    <input type="file" id="importarCsv" accept=".csv" onchange="importarCSV()" />
+    <!-- Importar CSV -->
+    <div style="margin: 10px 0;">
+      <label><strong>Importar CSV:</strong></label>
+      <input type="file" id="importarCsv" accept=".csv" onchange="importarCSV()" />
+    </div>
+
+    <!-- Pesquisar -->
+    <section id="pesquisar" class="active">
+      <label for="pesqAtalho">Atalho:</label>
+      <input id="pesqAtalho" oninput="pesquisarMensagem()" placeholder="Digite o atalho para pesquisar" autocomplete="off" />
+      
+      <div style="margin-top: 10px;">
+        <textarea id="resultadoPesquisa" rows="4" readonly></textarea>
+        <div style="text-align: center; margin-top: 10px;">
+          <button onclick="copiarMensagem()" class="copiar">Copiar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Adicionar -->
+    <section id="adicionar">
+      <label for="novoAtalho">Novo atalho:</label>
+      <input id="novoAtalho" placeholder="Digite o novo atalho" autocomplete="off" />
+      <label for="novaMensagem">Mensagem:</label>
+      <textarea id="novaMensagem" rows="4" placeholder="Digite a mensagem"></textarea>
+      <button onclick="adicionarMensagem()">Adicionar Mensagem</button>
+      <div id="msgAdicionar" style="margin-top:10px;color:green;"></div>
+    </section>
+
+    <!-- Alterar -->
+    <section id="alterar">
+      <label for="altAtalho">Atalho existente:</label>
+      <input id="altAtalho" placeholder="Digite o atalho" autocomplete="off" />
+      <label for="altMensagem">Nova mensagem:</label>
+      <textarea id="altMensagem" rows="4" placeholder="Digite a nova mensagem"></textarea>
+      <button onclick="alterarMensagem()">Alterar Mensagem</button>
+      <div id="msgAlterar" style="margin-top:10px;color:green;"></div>
+    </section>
   </div>
 
-  <!-- Pesquisar -->
-  <section id="pesquisar" class="active">
-    <div class="campo-container">
-      <input id="inputAtalho" placeholder="Digite o atalho para pesquisar..." autocomplete="off" oninput="buscarSugestoes()" />
-      <div id="listaSugestoes"></div>
-    </div>
-    <div class="resultado" id="resultado"></div>
-  </section>
-
-  <!-- Adicionar -->
-  <section id="adicionar">
-    <label for="addAtalho">Novo atalho:</label>
-    <input id="addAtalho" placeholder="Ex: agradecimento_olx" />
-    <label for="addMensagem">Mensagem:</label>
-    <textarea id="addMensagem" rows="4" placeholder="Digite a mensagem aqui..."></textarea>
-    <button onclick="adicionarAtalho()">Adicionar Atalho</button>
-    <div id="msgAdicionar" style="margin-top:10px;color:green;"></div>
-  </section>
-
-  <!-- Alterar -->
-  <section id="alterar">
-    <label for="altAtalho">Atalho existente:</label>
-    <input id="altAtalho" placeholder="Digite o atalho para alterar" autocomplete="off" oninput="buscarSugestoesAlterar()" />
-    <div id="listaSugestoesAlterar" style="position:relative;"></div>
-    <label for="altMensagem">Nova mensagem:</label>
-    <textarea id="altMensagem" rows="4" placeholder="Digite a nova mensagem aqui..."></textarea>
-    <button onclick="alterarAtalho()">Alterar Mensagem</button>
-    <div id="msgAlterar" style="margin-top:10px;color:green;"></div>
-  </section>
-
   <script>
+    const secoes = document.querySelectorAll("section");
+
     function mostrarSecao(id) {
-      document.querySelectorAll('section').forEach(sec => {
-        sec.classList.remove('active');
+      secoes.forEach(secao => secao.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    async function pesquisarMensagem() {
+      const atalho = document.getElementById("pesqAtalho").value;
+      if (!atalho) {
+        document.getElementById("resultadoPesquisa").value = "";
+        return;
+      }
+
+      const res = await fetch(`/api/atalho/${encodeURIComponent(atalho)}`);
+      const data = await res.json();
+      document.getElementById("resultadoPesquisa").value = data.mensagem || "Mensagem não encontrada.";
+    }
+
+    async function adicionarMensagem() {
+      const atalho = document.getElementById("novoAtalho").value;
+      const mensagem = document.getElementById("novaMensagem").value;
+
+      const res = await fetch("/api/atalho", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ atalho, mensagem }),
       });
-      document.getElementById(id).classList.add('active');
-      limparMensagens();
+
+      const data = await res.json();
+      document.getElementById("msgAdicionar").textContent = data.success || data.error || "Erro.";
+      document.getElementById("novoAtalho").value = "";
+      document.getElementById("novaMensagem").value = "";
     }
 
-    function limparMensagens() {
-      document.getElementById('resultado').textContent = '';
-      document.getElementById('msgAdicionar').textContent = '';
-      document.getElementById('msgAlterar').textContent = '';
+    async function alterarMensagem() {
+      const atalho = document.getElementById("altAtalho").value;
+      const novaMensagem = document.getElementById("altMensagem").value;
+
+      const res = await fetch(`/api/atalho/${encodeURIComponent(atalho)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensagem: novaMensagem }),
+      });
+
+      const data = await res.json();
+      document.getElementById("msgAlterar").textContent = data.success || data.error || "Erro.";
+      document.getElementById("altAtalho").value = "";
+      document.getElementById("altMensagem").value = "";
     }
 
-    // --- PESQUISAR ---
-    async function buscarSugestoes() {
-      const input = document.getElementById('inputAtalho');
-      const val = input.value.trim();
-      const lista = document.getElementById('listaSugestoes');
-      const resultado = document.getElementById('resultado');
-      resultado.textContent = '';
-
-      if (val.length === 0) {
-        lista.style.display = 'none';
-        lista.innerHTML = '';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/atalhos/' + encodeURIComponent(val));
-        if (res.ok) {
-          const data = await res.json();
-          if (data.atalhos.length > 0) {
-            lista.style.display = 'block';
-            lista.innerHTML = '';
-            data.atalhos.forEach(atalho => {
-              const div = document.createElement('div');
-              div.textContent = atalho;
-              div.onclick = () => {
-                input.value = atalho;
-                lista.style.display = 'none';
-                buscarMensagem();
-              };
-              lista.appendChild(div);
-            });
-          } else {
-            lista.style.display = 'none';
-            lista.innerHTML = '';
-          }
-        } else {
-          lista.style.display = 'none';
-          lista.innerHTML = '';
-        }
-      } catch {
-        lista.style.display = 'none';
-        lista.innerHTML = '';
-      }
+    function copiarMensagem() {
+      const textarea = document.getElementById("resultadoPesquisa");
+      textarea.select();
+      document.execCommand("copy");
+      alert("Mensagem copiada!");
     }
 
-    async function buscarMensagem() {
-      const input = document.getElementById('inputAtalho');
-      const atalho = input.value.trim();
-      const resultado = document.getElementById('resultado');
-
-      if (atalho.length === 0) {
-        resultado.textContent = '';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
-        if (res.ok) {
-          const data = await res.json();
-          mostrarMensagem(data.mensagem);
-        } else {
-          resultado.textContent = 'Atalho não encontrado.';
-        }
-      } catch {
-        resultado.textContent = 'Erro ao buscar mensagem.';
-      }
-    }
-
-    function mostrarMensagem(texto) {
-      const resultado = document.getElementById('resultado');
-      resultado.textContent = texto;
-
-      const btnExistente = document.querySelector('.btn-copy');
-      if (btnExistente) btnExistente.remove();
-
-      const btnCopy = document.createElement('button');
-      btnCopy.textContent = 'Copiar';
-      btnCopy.className = 'btn-copy';
-      btnCopy.onclick = () => {
-        navigator.clipboard.writeText(texto).then(() => {
-          btnCopy.textContent = 'Copiado!';
-          setTimeout(() => btnCopy.textContent = 'Copiar', 2000);
-        });
-      };
-
-      resultado.appendChild(btnCopy);
-    }
-
-    // --- ADICIONAR ---
-    async function adicionarAtalho() {
-      const atalho = document.getElementById('addAtalho').value.trim();
-      const mensagem = document.getElementById('addMensagem').value.trim();
-      const msg = document.getElementById('msgAdicionar');
-      msg.style.color = 'red';
-
-      if (!atalho || !mensagem) {
-        msg.textContent = 'Preencha o atalho e a mensagem.';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/atalho', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ atalho, mensagem })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-          msg.style.color = 'green';
-          msg.textContent = `Atalho "${data.atalho}" adicionado com sucesso!`;
-          document.getElementById('addAtalho').value = '';
-          document.getElementById('addMensagem').value = '';
-        } else {
-          msg.textContent = data.error || 'Erro ao adicionar atalho.';
-        }
-      } catch {
-        msg.textContent = 'Erro ao adicionar atalho.';
-      }
-    }
-
-    // --- ALTERAR ---
-    async function buscarSugestoesAlterar() {
-      const input = document.getElementById('altAtalho');
-      const val = input.value.trim();
-      const lista = document.getElementById('listaSugestoesAlterar');
-      const msg = document.getElementById('msgAlterar');
-      msg.textContent = '';
-
-      if (val.length === 0) {
-        lista.style.display = 'none';
-        lista.innerHTML = '';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/atalhos/' + encodeURIComponent(val));
-        if (res.ok) {
-          const data = await res.json();
-          if (data.atalhos.length > 0) {
-            lista.style.display = 'block';
-            lista.innerHTML = '';
-            data.atalhos.forEach(atalho => {
-              const div = document.createElement('div');
-              div.textContent = atalho;
-              div.style.padding = '6px 8px';
-              div.style.cursor = 'pointer';
-              div.onmouseenter = () => div.style.backgroundColor = '#007bff20';
-              div.onmouseleave = () => div.style.backgroundColor = 'transparent';
-              div.onclick = () => {
-                input.value = atalho;
-                lista.style.display = 'none';
-                buscarMensagemAlterar(atalho);
-              };
-              lista.appendChild(div);
-            });
-          } else {
-            lista.style.display = 'none';
-            lista.innerHTML = '';
-          }
-        } else {
-          lista.style.display = 'none';
-          lista.innerHTML = '';
-        }
-      } catch {
-        lista.style.display = 'none';
-        lista.innerHTML = '';
-      }
-    }
-
-    async function buscarMensagemAlterar(atalho) {
-      const campoMensagem = document.getElementById('altMensagem');
-      campoMensagem.value = '';
-      try {
-        const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
-        if (res.ok) {
-          const data = await res.json();
-          campoMensagem.value = data.mensagem;
-        }
-      } catch {}
-    }
-
-    async function alterarAtalho() {
-      const atalho = document.getElementById('altAtalho').value.trim();
-      const mensagem = document.getElementById('altMensagem').value.trim();
-      const msg = document.getElementById('msgAlterar');
-      msg.style.color = 'red';
-
-      if (!atalho || !mensagem) {
-        msg.textContent = 'Preencha o atalho e a nova mensagem.';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/atalho', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ atalho, mensagem })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-          msg.style.color = 'green';
-          msg.textContent = `Atalho "${atalho}" alterado com sucesso!`;
-          document.getElementById('altAtalho').value = '';
-          document.getElementById('altMensagem').value = '';
-        } else {
-          msg.textContent = data.error || 'Erro ao alterar atalho.';
-        }
-      } catch {
-        msg.textContent = 'Erro ao alterar atalho.';
-      }
-    }
-
-    // --- IMPORTAR CSV ---
     async function importarCSV() {
       const input = document.getElementById('importarCsv');
       const file = input.files[0];
@@ -417,10 +203,10 @@
           const linha = linhas[i].trim();
           if (!linha) continue;
 
-          const [atalho, ...mensagemArr] = linha.split(',');
-          const mensagem = mensagemArr.join(',').trim();
+          const [atalho, ...mensagemArray] = linha.split(',');
+          if (!atalho || mensagemArray.length === 0) continue;
 
-          if (!atalho || !mensagem) continue;
+          const mensagem = mensagemArray.join(',').trim();
 
           try {
             const res = await fetch('/api/atalho', {
