@@ -74,6 +74,7 @@
       border-radius: 5px;
       cursor: pointer;
       margin-top: 10px;
+      width: 100%;
     }
 
     #resultadoPesquisa {
@@ -91,10 +92,12 @@
       <button onclick="mostrarSecao('alterar')">Alterar</button>
     </nav>
 
-    <!-- Importar CSV -->
+    <!-- Importar/Exportar -->
     <div style="margin: 10px 0;">
       <label><strong>Importar CSV:</strong></label>
       <input type="file" id="importarCsv" accept=".csv" onchange="importarCSV()" />
+      <br/><br/>
+      <button onclick="exportarCSV()" style="width: 100%; background-color: #ff9800; color: white; padding: 10px; border: none; border-radius: 5px;">Exportar CSV</button>
     </div>
 
     <!-- Pesquisar -->
@@ -102,10 +105,8 @@
       <label for="pesqAtalho">Atalho:</label>
       <input id="pesqAtalho" oninput="pesquisarMensagem()" placeholder="Digite o atalho para pesquisar" autocomplete="off" />
       
-      <div style="margin-top: 10px;">
-        <textarea id="resultadoPesquisa" rows="6" readonly></textarea>
-        <button onclick="copiarMensagem()" class="copiar">Copiar</button>
-      </div>
+      <textarea id="resultadoPesquisa" rows="6" readonly></textarea>
+      <button onclick="copiarMensagem()" class="copiar">Copiar</button>
     </section>
 
     <!-- Adicionar -->
@@ -239,6 +240,30 @@
       };
 
       reader.readAsText(file);
+    }
+
+    async function exportarCSV() {
+      try {
+        const res = await fetch('/api/atalhos');
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+          alert("Erro ao exportar mensagens.");
+          return;
+        }
+
+        const csv = data.map(item => `"${item.atalho}","${item.mensagem.replace(/"/g, '""')}"`).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mensagens.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("Erro na exportação: " + err.message);
+      }
     }
   </script>
 </body>
