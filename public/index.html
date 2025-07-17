@@ -9,7 +9,6 @@
       font-family: sans-serif;
       background-color: #f2f2f2;
     }
-
     .container {
       background-color: white;
       max-width: 500px;
@@ -18,21 +17,18 @@
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
-
     h1 {
       text-align: center;
       color: #007bff;
       border-bottom: 2px solid #007bff;
       padding-bottom: 10px;
     }
-
     nav {
       display: flex;
       justify-content: center;
       gap: 10px;
       margin-bottom: 20px;
     }
-
     nav button {
       background-color: #007bff;
       color: white;
@@ -42,21 +38,17 @@
       cursor: pointer;
       font-weight: bold;
     }
-
     section {
       display: none;
     }
-
     section.active {
       display: block;
     }
-
     label {
       font-weight: bold;
       display: block;
       margin-top: 10px;
     }
-
     input, textarea {
       width: 100%;
       padding: 10px;
@@ -64,7 +56,6 @@
       border: 1px solid #ccc;
       border-radius: 5px;
     }
-
     .copiar {
       background-color: green;
       color: white;
@@ -76,7 +67,6 @@
       margin-top: 10px;
       width: 100%;
     }
-
     #resultadoPesquisa {
       resize: none;
     }
@@ -92,7 +82,6 @@
       <button onclick="mostrarSecao('alterar')">Alterar</button>
     </nav>
 
-    <!-- Importar/Exportar -->
     <div style="margin: 10px 0;">
       <label><strong>Importar CSV:</strong></label>
       <input type="file" id="importarCsv" accept=".csv" onchange="importarCSV()" />
@@ -100,16 +89,13 @@
       <button onclick="exportarCSV()" style="width: 100%; background-color: #ff9800; color: white; padding: 10px; border: none; border-radius: 5px;">Exportar CSV</button>
     </div>
 
-    <!-- Pesquisar -->
     <section id="pesquisar" class="active">
       <label for="pesqAtalho">Atalho:</label>
       <input id="pesqAtalho" oninput="pesquisarMensagem()" placeholder="Digite o atalho para pesquisar" autocomplete="off" />
-      
       <textarea id="resultadoPesquisa" rows="6" readonly></textarea>
       <button onclick="copiarMensagem()" class="copiar">Copiar</button>
     </section>
 
-    <!-- Adicionar -->
     <section id="adicionar">
       <label for="novoAtalho">Novo atalho:</label>
       <input id="novoAtalho" placeholder="Digite o novo atalho" autocomplete="off" />
@@ -119,7 +105,6 @@
       <div id="msgAdicionar" style="margin-top:10px;color:green;"></div>
     </section>
 
-    <!-- Alterar -->
     <section id="alterar">
       <label for="altAtalho">Atalho existente:</label>
       <input id="altAtalho" placeholder="Digite o atalho" autocomplete="off" />
@@ -138,50 +123,63 @@
       document.getElementById(id).classList.add("active");
     }
 
-    async function pesquisarMensagem() {
-      const atalho = document.getElementById("pesqAtalho").value;
-      if (!atalho) {
-        document.getElementById("resultadoPesquisa").value = "";
+    function getMensagens() {
+      return JSON.parse(localStorage.getItem("mensagens") || "{}");
+    }
+
+    function salvarMensagens(obj) {
+      localStorage.setItem("mensagens", JSON.stringify(obj));
+    }
+
+    function pesquisarMensagem() {
+      const atalho = document.getElementById("pesqAtalho").value.trim();
+      const mensagens = getMensagens();
+      const mensagem = mensagens[atalho] || "Mensagem não encontrada.";
+      document.getElementById("resultadoPesquisa").value = mensagem;
+    }
+
+    function adicionarMensagem() {
+      const atalho = document.getElementById("novoAtalho").value.trim();
+      const mensagem = document.getElementById("novaMensagem").value.trim();
+      const mensagens = getMensagens();
+
+      if (!atalho || !mensagem) {
+        alert("Preencha todos os campos.");
         return;
       }
 
-      try {
-        const res = await fetch(`/api/atalho/${encodeURIComponent(atalho)}`);
-        const data = await res.json();
-        document.getElementById("resultadoPesquisa").value = data.mensagem || "Mensagem não encontrada.";
-      } catch (err) {
-        document.getElementById("resultadoPesquisa").value = "Erro ao pesquisar.";
+      if (mensagens[atalho]) {
+        alert("Esse atalho já existe. Use a aba Alterar.");
+        return;
       }
-    }
 
-    async function adicionarMensagem() {
-      const atalho = document.getElementById("novoAtalho").value;
-      const mensagem = document.getElementById("novaMensagem").value;
+      mensagens[atalho] = mensagem;
+      salvarMensagens(mensagens);
 
-      const res = await fetch("/api/atalho", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ atalho, mensagem }),
-      });
-
-      const data = await res.json();
-      document.getElementById("msgAdicionar").textContent = data.success || data.error || "Erro.";
+      document.getElementById("msgAdicionar").textContent = "Mensagem adicionada!";
       document.getElementById("novoAtalho").value = "";
       document.getElementById("novaMensagem").value = "";
     }
 
-    async function alterarMensagem() {
-      const atalho = document.getElementById("altAtalho").value;
-      const novaMensagem = document.getElementById("altMensagem").value;
+    function alterarMensagem() {
+      const atalho = document.getElementById("altAtalho").value.trim();
+      const novaMensagem = document.getElementById("altMensagem").value.trim();
+      const mensagens = getMensagens();
 
-      const res = await fetch(`/api/atalho/${encodeURIComponent(atalho)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensagem: novaMensagem }),
-      });
+      if (!atalho || !novaMensagem) {
+        alert("Preencha todos os campos.");
+        return;
+      }
 
-      const data = await res.json();
-      document.getElementById("msgAlterar").textContent = data.success || data.error || "Erro.";
+      if (!mensagens[atalho]) {
+        alert("Esse atalho não existe. Use a aba Adicionar.");
+        return;
+      }
+
+      mensagens[atalho] = novaMensagem;
+      salvarMensagens(mensagens);
+
+      document.getElementById("msgAlterar").textContent = "Mensagem alterada!";
       document.getElementById("altAtalho").value = "";
       document.getElementById("altMensagem").value = "";
     }
@@ -198,72 +196,52 @@
       alert("Mensagem copiada!");
     }
 
-    async function importarCSV() {
-      const input = document.getElementById('importarCsv');
+    function importarCSV() {
+      const input = document.getElementById("importarCsv");
       const file = input.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = async function (e) {
+      reader.onload = function (e) {
         const linhas = e.target.result.split('\n');
-        const resultados = [];
+        const mensagens = getMensagens();
+        let total = 0;
 
-        for (let i = 0; i < linhas.length; i++) {
-          const linha = linhas[i].trim();
+        for (let linha of linhas) {
+          linha = linha.trim();
           if (!linha) continue;
 
-          const [atalho, ...mensagemArray] = linha.split(',');
-          if (!atalho || mensagemArray.length === 0) continue;
+          const [atalho, ...msg] = linha.split(',');
+          if (!atalho || msg.length === 0) continue;
 
-          const mensagem = mensagemArray.join(',').trim();
-
-          try {
-            const res = await fetch('/api/atalho', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ atalho: atalho.trim(), mensagem })
-            });
-
-            if (res.ok) {
-              resultados.push(`✅ "${atalho}" importado.`);
-            } else {
-              const data = await res.json();
-              resultados.push(`❌ Erro "${atalho}": ${data.error || 'Erro desconhecido'}`);
-            }
-          } catch (err) {
-            resultados.push(`❌ Falha "${atalho}": ${err.message}`);
-          }
+          mensagens[atalho.trim()] = msg.join(',').trim();
+          total++;
         }
 
-        alert(resultados.join('\n'));
+        salvarMensagens(mensagens);
+        alert(`✅ Importação concluída: ${total} mensagens.`);
         input.value = '';
       };
 
       reader.readAsText(file);
     }
 
-    async function exportarCSV() {
-      try {
-        const res = await fetch('/api/atalhos');
-        const data = await res.json();
+    function exportarCSV() {
+      const mensagens = getMensagens();
+      const linhas = Object.entries(mensagens).map(
+        ([atalho, mensagem]) => `"${atalho}","${mensagem.replace(/"/g, '""')}"`
+      );
 
-        if (!Array.isArray(data)) {
-          alert("Erro ao exportar mensagens.");
-          return;
-        }
+      const csv = linhas.join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
 
-        const csv = data.map(item => `"${item.atalho}","${item.mensagem.replace(/"/g, '""')}"`).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'mensagens.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        alert("Erro na exportação: " + err.message);
-      }
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "mensagens.csv";
+      a.click();
+
+      URL.revokeObjectURL(url);
     }
   </script>
 </body>
