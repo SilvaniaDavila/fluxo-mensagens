@@ -18,10 +18,8 @@
   },
   "homepage": "https://github.com/SilvaniaDavila/fluxo-mensagens#readme",
   "description": "",
- "dependencies": {
-  "express": "^4.17.1",
-  "multer": "^1.4.4",  // Verifique se está aqui
-  ...
-}
-  
+  "dependencies": {
+    "express": "^4.17.1",
+    "multer": "^1.4.4"
+  }
 }
