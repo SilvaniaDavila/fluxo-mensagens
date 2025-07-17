@@ -123,65 +123,29 @@
       document.getElementById(id).classList.add("active");
     }
 
+    function pesquisarMensagem() {
+      const atalhoPrefixo = document.getElementById("pesqAtalho").value.trim();
+      
+      if (!atalhoPrefixo) return;
+
+      fetch(`/api/atalhos/${atalhoPrefixo}`)
+        .then((response) => response.json())
+        .then((data) => {
+          const resultados = data.atalhos;
+          const resultadoTexto = resultados.length > 0 ? resultados.join("\n") : "Nenhum atalho encontrado.";
+          document.getElementById("resultadoPesquisa").value = resultadoTexto;
+        })
+        .catch((error) => {
+          document.getElementById("resultadoPesquisa").value = "Erro ao buscar atalhos.";
+        });
+    }
+
     function getMensagens() {
       return JSON.parse(localStorage.getItem("mensagens") || "{}");
     }
 
     function salvarMensagens(obj) {
       localStorage.setItem("mensagens", JSON.stringify(obj));
-    }
-
-    function pesquisarMensagem() {
-      const atalho = document.getElementById("pesqAtalho").value.trim();
-      const mensagens = getMensagens();
-      const mensagem = mensagens[atalho] || "Mensagem não encontrada.";
-      document.getElementById("resultadoPesquisa").value = mensagem;
-    }
-
-    function adicionarMensagem() {
-      const atalho = document.getElementById("novoAtalho").value.trim();
-      const mensagem = document.getElementById("novaMensagem").value.trim();
-      const mensagens = getMensagens();
-
-      if (!atalho || !mensagem) {
-        alert("Preencha todos os campos.");
-        return;
-      }
-
-      if (mensagens[atalho]) {
-        alert("Esse atalho já existe. Use a aba Alterar.");
-        return;
-      }
-
-      mensagens[atalho] = mensagem;
-      salvarMensagens(mensagens);
-
-      document.getElementById("msgAdicionar").textContent = "Mensagem adicionada!";
-      document.getElementById("novoAtalho").value = "";
-      document.getElementById("novaMensagem").value = "";
-    }
-
-    function alterarMensagem() {
-      const atalho = document.getElementById("altAtalho").value.trim();
-      const novaMensagem = document.getElementById("altMensagem").value.trim();
-      const mensagens = getMensagens();
-
-      if (!atalho || !novaMensagem) {
-        alert("Preencha todos os campos.");
-        return;
-      }
-
-      if (!mensagens[atalho]) {
-        alert("Esse atalho não existe. Use a aba Adicionar.");
-        return;
-      }
-
-      mensagens[atalho] = novaMensagem;
-      salvarMensagens(mensagens);
-
-      document.getElementById("msgAlterar").textContent = "Mensagem alterada!";
-      document.getElementById("altAtalho").value = "";
-      document.getElementById("altMensagem").value = "";
     }
 
     function copiarMensagem() {
