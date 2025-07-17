@@ -1,160 +1,136 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mensagens Rápidas</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atalhos Rápidos</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 20px;
+      font-family: Arial, sans-serif;
+      padding: 20px;
       background-color: #f2f2f2;
     }
     h1 {
       text-align: center;
     }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .campo {
-      margin-bottom: 10px;
-    }
-    label {
-      font-weight: bold;
-    }
-    input[type="text"], textarea {
-      width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 10px;
+    input, textarea, button {
       padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background-color: #4caf50;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
     .atalhos {
       margin-top: 20px;
     }
     .atalho {
-      background: #eee;
+      background-color: #fff;
       padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      position: relative;
+      margin: 10px 0;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .atalho-buttons {
+    .botoes {
+      margin-top: 10px;
+    }
+    .botoes button {
+      margin-right: 5px;
+    }
+    #buscarInput {
+      width: 100%;
+    }
+    #nome, #mensagem {
+      width: 48%;
+    }
+    #formulario {
       display: flex;
-      gap: 8px;
-      margin-top: 8px;
+      flex-wrap: wrap;
+      justify-content: space-between;
     }
-    .copiado {
-      color: green;
-      font-weight: bold;
-      margin-top: 5px;
+    .copiar-btn {
+      float: right;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Gerenciador de Atalhos</h1>
+  <h1>Atalhos Rápidos</h1>
 
-    <div class="campo">
-      <label for="busca">Buscar/Selecionar atalho:</label>
-      <input type="text" id="busca" placeholder="Digite o nome do atalho" oninput="preencherMensagem()" />
-    </div>
-
-    <div class="campo">
-      <label for="mensagem">Mensagem:</label>
-      <textarea id="mensagem" rows="4"></textarea>
-    </div>
-
-    <button onclick="adicionarOuAlterarAtalho()">Alterar</button>
-    <button onclick="removerAtalho()" style="background-color:#e74c3c;">Remover</button>
-    <button onclick="copiarMensagem()">Copiar Mensagem</button>
-    <div id="mensagemCopiada" class="copiado" style="display: none;">Mensagem copiada! ✅</div>
-
-    <div class="atalhos">
-      <h3>📋 Lista de Atalhos</h3>
-      <div id="lista"></div>
-    </div>
+  <div id="formulario">
+    <input type="text" id="nome" placeholder="Nome do atalho">
+    <textarea id="mensagem" placeholder="Mensagem"></textarea>
+    <button onclick="adicionarAtalho()">Adicionar</button>
   </div>
 
+  <input type="text" id="buscarInput" placeholder="Buscar atalhos..." oninput="buscarAtalhos()">
+
+  <div class="atalhos" id="atalhos"></div>
+
   <script>
-    let atalhos = {};
+    let atalhos = JSON.parse(localStorage.getItem('atalhos')) || {};
 
-    function atualizarLista() {
-      const lista = document.getElementById("lista");
-      lista.innerHTML = "";
-      for (const nome in atalhos) {
-        const div = document.createElement("div");
-        div.className = "atalho";
-        div.innerHTML = `<strong>${nome}</strong><br>${atalhos[nome]}`;
-        lista.appendChild(div);
-      }
+    function salvarAtalhos() {
+      localStorage.setItem('atalhos', JSON.stringify(atalhos));
     }
 
-    function adicionarOuAlterarAtalho() {
-      const nome = document.getElementById("busca").value.trim();
-      const mensagem = document.getElementById("mensagem").value.trim();
-      if (!nome || !mensagem) {
-        alert("Preencha todos os campos!");
-        return;
-      }
-      atalhos[nome] = mensagem;
-      atualizarLista();
-      document.getElementById("mensagemCopiada").style.display = "none";
-    }
-
-    function preencherMensagem() {
-      const nome = document.getElementById("busca").value.trim();
-      if (atalhos[nome]) {
-        document.getElementById("mensagem").value = atalhos[nome];
-      }
-    }
-
-    function removerAtalho() {
-      const nome = document.getElementById("busca").value.trim();
-      if (atalhos[nome]) {
-        if (confirm(`Deseja remover o atalho '${nome}'?`)) {
-          delete atalhos[nome];
-          atualizarLista();
-          document.getElementById("busca").value = "";
-          document.getElementById("mensagem").value = "";
-          document.getElementById("mensagemCopiada").style.display = "none";
+    function exibirAtalhos(filtro = '') {
+      const container = document.getElementById('atalhos');
+      container.innerHTML = '';
+      Object.keys(atalhos).forEach(nome => {
+        if (nome.toLowerCase().includes(filtro.toLowerCase())) {
+          const div = document.createElement('div');
+          div.className = 'atalho';
+          div.innerHTML = `<strong>${nome}</strong><br><span>${atalhos[nome]}</span>
+            <div class="botoes">
+              <button onclick="copiarTexto('${nome}')">Copiar</button>
+              <button onclick="alterarAtalho('${nome}')">Alterar</button>
+              <button onclick="removerAtalho('${nome}')">Remover</button>
+            </div>`;
+          container.appendChild(div);
         }
-      } else {
-        alert("Atalho não encontrado.");
-      }
-    }
-
-    function copiarMensagem() {
-      const texto = document.getElementById("mensagem").value;
-      if (!texto) return alert("Nenhuma mensagem para copiar.");
-
-      navigator.clipboard.writeText(texto).then(() => {
-        const msg = document.getElementById("mensagemCopiada");
-        msg.style.display = "block";
-        setTimeout(() => {
-          msg.style.display = "none";
-        }, 2000);
       });
     }
+
+    function adicionarAtalho() {
+      const nome = document.getElementById('nome').value.trim();
+      const mensagem = document.getElementById('mensagem').value.trim();
+      if (!nome || !mensagem) return alert('Preencha os dois campos.');
+      atalhos[nome] = mensagem;
+      salvarAtalhos();
+      exibirAtalhos();
+      document.getElementById('nome').value = '';
+      document.getElementById('mensagem').value = '';
+    }
+
+    function copiarTexto(nome) {
+      navigator.clipboard.writeText(atalhos[nome])
+        .then(() => alert('Mensagem copiada!'))
+        .catch(err => console.error('Erro ao copiar', err));
+    }
+
+    function alterarAtalho(nomeAntigo) {
+      const novoNome = prompt('Novo nome:', nomeAntigo);
+      if (!novoNome) return;
+      const novaMensagem = prompt('Nova mensagem:', atalhos[nomeAntigo]);
+      if (!novaMensagem) return;
+      delete atalhos[nomeAntigo];
+      atalhos[novoNome] = novaMensagem;
+      salvarAtalhos();
+      exibirAtalhos();
+    }
+
+    function removerAtalho(nome) {
+      if (confirm(`Deseja remover o atalho "${nome}"?`)) {
+        delete atalhos[nome];
+        salvarAtalhos();
+        exibirAtalhos();
+      }
+    }
+
+    function buscarAtalhos() {
+      const filtro = document.getElementById('buscarInput').value;
+      exibirAtalhos(filtro);
+    }
+
+    exibirAtalhos();
   </script>
 </body>
 </html>
