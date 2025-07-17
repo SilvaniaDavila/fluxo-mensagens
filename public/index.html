@@ -1,136 +1,451 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atalhos Rápidos</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fluxo de Mensagens</title>
   <style>
     body {
       font-family: Arial, sans-serif;
+      margin: 20px auto;
+      max-width: 480px;
+      background: #f0f4f8;
+      color: #333;
       padding: 20px;
-      background-color: #f2f2f2;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
-    h1 {
-      text-align: center;
+    h2 {
+      color: #007bff;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 5px;
     }
-    input, textarea, button {
-      padding: 10px;
-      margin: 5px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    .atalhos {
-      margin-top: 20px;
-    }
-    .atalho {
-      background-color: #fff;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .botoes {
-      margin-top: 10px;
-    }
-    .botoes button {
-      margin-right: 5px;
-    }
-    #buscarInput {
+    input, textarea {
       width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: 1.5px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+      resize: vertical;
     }
-    #nome, #mensagem {
-      width: 48%;
+    input:focus, textarea:focus {
+      border-color: #007bff;
+      outline: none;
     }
-    #formulario {
+    button {
+      background-color: #007bff;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 15px;
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .campo-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    #listaSugestoes {
+      border: 1px solid #007bff;
+      border-radius: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+      display: none;
+      margin-top: 2px;
+      background: #fff;
+      position: absolute;
+      width: 100%;
+      z-index: 10;
+      top: 100%;
+      left: 0;
+    }
+    #listaSugestoes div {
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+    #listaSugestoes div:hover {
+      background-color: #007bff20;
+    }
+    .resultado {
+      margin-top: 10px;
+      border: 1.5px solid #007bff;
+      background-color: white;
+      padding: 15px 50px 15px 15px;
+      border-radius: 8px;
+      min-height: 80px;
+      white-space: pre-wrap;
+      font-size: 1rem;
+      position: relative;
+    }
+    .btn-copy {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
+      user-select: none;
+    }
+    .btn-copy:hover {
+      background-color: #1e7e34;
+    }
+    nav {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
+      justify-content: space-around;
+      margin-bottom: 20px;
     }
-    .copiar-btn {
-      float: right;
+    nav button {
+      width: auto;
+      padding: 10px 20px;
+      margin: 0 5px;
+      font-size: 1rem;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
     }
   </style>
 </head>
 <body>
-  <h1>Atalhos Rápidos</h1>
+  <h2>Fluxo de Mensagens</h2>
 
-  <div id="formulario">
-    <input type="text" id="nome" placeholder="Nome do atalho">
-    <textarea id="mensagem" placeholder="Mensagem"></textarea>
-    <button onclick="adicionarAtalho()">Adicionar</button>
+  <nav>
+    <button onclick="mostrarSecao('pesquisar')">Pesquisar</button>
+    <button onclick="mostrarSecao('adicionar')">Adicionar</button>
+    <button onclick="mostrarSecao('alterar')">Alterar</button>
+  </nav>
+
+  <div style="margin-bottom: 20px;">
+    <label><strong>Importar CSV:</strong></label>
+    <input type="file" id="importarCsv" accept=".csv" onchange="importarCSV()" />
   </div>
 
-  <input type="text" id="buscarInput" placeholder="Buscar atalhos..." oninput="buscarAtalhos()">
+  <!-- Pesquisar -->
+  <section id="pesquisar" class="active">
+    <div class="campo-container">
+      <input id="inputAtalho" placeholder="Digite o atalho para pesquisar..." autocomplete="off" oninput="buscarSugestoes()" />
+      <div id="listaSugestoes"></div>
+    </div>
+    <div class="resultado" id="resultado"></div>
+  </section>
 
-  <div class="atalhos" id="atalhos"></div>
+  <!-- Adicionar -->
+  <section id="adicionar">
+    <label for="addAtalho">Novo atalho:</label>
+    <input id="addAtalho" placeholder="Ex: agradecimento_olx" />
+    <label for="addMensagem">Mensagem:</label>
+    <textarea id="addMensagem" rows="4" placeholder="Digite a mensagem aqui..."></textarea>
+    <button onclick="adicionarAtalho()">Adicionar Atalho</button>
+    <div id="msgAdicionar" style="margin-top:10px;color:green;"></div>
+  </section>
+
+  <!-- Alterar -->
+  <section id="alterar">
+    <label for="altAtalho">Atalho existente:</label>
+    <input id="altAtalho" placeholder="Digite o atalho para alterar" autocomplete="off" oninput="buscarSugestoesAlterar()" />
+    <div id="listaSugestoesAlterar" style="position:relative;"></div>
+    <label for="altMensagem">Nova mensagem:</label>
+    <textarea id="altMensagem" rows="4" placeholder="Digite a nova mensagem aqui..."></textarea>
+    <button onclick="alterarAtalho()">Alterar Mensagem</button>
+    <div id="msgAlterar" style="margin-top:10px;color:green;"></div>
+  </section>
 
   <script>
-    let atalhos = JSON.parse(localStorage.getItem('atalhos')) || {};
-
-    function salvarAtalhos() {
-      localStorage.setItem('atalhos', JSON.stringify(atalhos));
-    }
-
-    function exibirAtalhos(filtro = '') {
-      const container = document.getElementById('atalhos');
-      container.innerHTML = '';
-      Object.keys(atalhos).forEach(nome => {
-        if (nome.toLowerCase().includes(filtro.toLowerCase())) {
-          const div = document.createElement('div');
-          div.className = 'atalho';
-          div.innerHTML = `<strong>${nome}</strong><br><span>${atalhos[nome]}</span>
-            <div class="botoes">
-              <button onclick="copiarTexto('${nome}')">Copiar</button>
-              <button onclick="alterarAtalho('${nome}')">Alterar</button>
-              <button onclick="removerAtalho('${nome}')">Remover</button>
-            </div>`;
-          container.appendChild(div);
-        }
+    function mostrarSecao(id) {
+      document.querySelectorAll('section').forEach(sec => {
+        sec.classList.remove('active');
       });
+      document.getElementById(id).classList.add('active');
+      limparMensagens();
     }
 
-    function adicionarAtalho() {
-      const nome = document.getElementById('nome').value.trim();
-      const mensagem = document.getElementById('mensagem').value.trim();
-      if (!nome || !mensagem) return alert('Preencha os dois campos.');
-      atalhos[nome] = mensagem;
-      salvarAtalhos();
-      exibirAtalhos();
-      document.getElementById('nome').value = '';
-      document.getElementById('mensagem').value = '';
+    function limparMensagens() {
+      document.getElementById('resultado').textContent = '';
+      document.getElementById('msgAdicionar').textContent = '';
+      document.getElementById('msgAlterar').textContent = '';
     }
 
-    function copiarTexto(nome) {
-      navigator.clipboard.writeText(atalhos[nome])
-        .then(() => alert('Mensagem copiada!'))
-        .catch(err => console.error('Erro ao copiar', err));
-    }
+    // --- PESQUISAR ---
+    async function buscarSugestoes() {
+      const input = document.getElementById('inputAtalho');
+      const val = input.value.trim();
+      const lista = document.getElementById('listaSugestoes');
+      const resultado = document.getElementById('resultado');
+      resultado.textContent = '';
 
-    function alterarAtalho(nomeAntigo) {
-      const novoNome = prompt('Novo nome:', nomeAntigo);
-      if (!novoNome) return;
-      const novaMensagem = prompt('Nova mensagem:', atalhos[nomeAntigo]);
-      if (!novaMensagem) return;
-      delete atalhos[nomeAntigo];
-      atalhos[novoNome] = novaMensagem;
-      salvarAtalhos();
-      exibirAtalhos();
-    }
+      if (val.length === 0) {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+        return;
+      }
 
-    function removerAtalho(nome) {
-      if (confirm(`Deseja remover o atalho "${nome}"?`)) {
-        delete atalhos[nome];
-        salvarAtalhos();
-        exibirAtalhos();
+      try {
+        const res = await fetch('/api/atalhos/' + encodeURIComponent(val));
+        if (res.ok) {
+          const data = await res.json();
+          if (data.atalhos.length > 0) {
+            lista.style.display = 'block';
+            lista.innerHTML = '';
+            data.atalhos.forEach(atalho => {
+              const div = document.createElement('div');
+              div.textContent = atalho;
+              div.onclick = () => {
+                input.value = atalho;
+                lista.style.display = 'none';
+                buscarMensagem();
+              };
+              lista.appendChild(div);
+            });
+          } else {
+            lista.style.display = 'none';
+            lista.innerHTML = '';
+          }
+        } else {
+          lista.style.display = 'none';
+          lista.innerHTML = '';
+        }
+      } catch {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
       }
     }
 
-    function buscarAtalhos() {
-      const filtro = document.getElementById('buscarInput').value;
-      exibirAtalhos(filtro);
+    async function buscarMensagem() {
+      const input = document.getElementById('inputAtalho');
+      const atalho = input.value.trim();
+      const resultado = document.getElementById('resultado');
+
+      if (atalho.length === 0) {
+        resultado.textContent = '';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
+        if (res.ok) {
+          const data = await res.json();
+          mostrarMensagem(data.mensagem);
+        } else {
+          resultado.textContent = 'Atalho não encontrado.';
+        }
+      } catch {
+        resultado.textContent = 'Erro ao buscar mensagem.';
+      }
     }
 
-    exibirAtalhos();
+    function mostrarMensagem(texto) {
+      const resultado = document.getElementById('resultado');
+      resultado.textContent = texto;
+
+      const btnExistente = document.querySelector('.btn-copy');
+      if (btnExistente) btnExistente.remove();
+
+      const btnCopy = document.createElement('button');
+      btnCopy.textContent = 'Copiar';
+      btnCopy.className = 'btn-copy';
+      btnCopy.onclick = () => {
+        navigator.clipboard.writeText(texto).then(() => {
+          btnCopy.textContent = 'Copiado!';
+          setTimeout(() => btnCopy.textContent = 'Copiar', 2000);
+        });
+      };
+
+      resultado.appendChild(btnCopy);
+    }
+
+    // --- ADICIONAR ---
+    async function adicionarAtalho() {
+      const atalho = document.getElementById('addAtalho').value.trim();
+      const mensagem = document.getElementById('addMensagem').value.trim();
+      const msg = document.getElementById('msgAdicionar');
+      msg.style.color = 'red';
+
+      if (!atalho || !mensagem) {
+        msg.textContent = 'Preencha o atalho e a mensagem.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/atalho', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ atalho, mensagem })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          msg.style.color = 'green';
+          msg.textContent = `Atalho "${data.atalho}" adicionado com sucesso!`;
+          document.getElementById('addAtalho').value = '';
+          document.getElementById('addMensagem').value = '';
+        } else {
+          msg.textContent = data.error || 'Erro ao adicionar atalho.';
+        }
+      } catch {
+        msg.textContent = 'Erro ao adicionar atalho.';
+      }
+    }
+
+    // --- ALTERAR ---
+    async function buscarSugestoesAlterar() {
+      const input = document.getElementById('altAtalho');
+      const val = input.value.trim();
+      const lista = document.getElementById('listaSugestoesAlterar');
+      const msg = document.getElementById('msgAlterar');
+      msg.textContent = '';
+
+      if (val.length === 0) {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/atalhos/' + encodeURIComponent(val));
+        if (res.ok) {
+          const data = await res.json();
+          if (data.atalhos.length > 0) {
+            lista.style.display = 'block';
+            lista.innerHTML = '';
+            data.atalhos.forEach(atalho => {
+              const div = document.createElement('div');
+              div.textContent = atalho;
+              div.style.padding = '6px 8px';
+              div.style.cursor = 'pointer';
+              div.onmouseenter = () => div.style.backgroundColor = '#007bff20';
+              div.onmouseleave = () => div.style.backgroundColor = 'transparent';
+              div.onclick = () => {
+                input.value = atalho;
+                lista.style.display = 'none';
+                buscarMensagemAlterar(atalho);
+              };
+              lista.appendChild(div);
+            });
+          } else {
+            lista.style.display = 'none';
+            lista.innerHTML = '';
+          }
+        } else {
+          lista.style.display = 'none';
+          lista.innerHTML = '';
+        }
+      } catch {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+      }
+    }
+
+    async function buscarMensagemAlterar(atalho) {
+      const campoMensagem = document.getElementById('altMensagem');
+      campoMensagem.value = '';
+      try {
+        const res = await fetch('/api/mensagem/' + encodeURIComponent(atalho));
+        if (res.ok) {
+          const data = await res.json();
+          campoMensagem.value = data.mensagem;
+        }
+      } catch {}
+    }
+
+    async function alterarAtalho() {
+      const atalho = document.getElementById('altAtalho').value.trim();
+      const mensagem = document.getElementById('altMensagem').value.trim();
+      const msg = document.getElementById('msgAlterar');
+      msg.style.color = 'red';
+
+      if (!atalho || !mensagem) {
+        msg.textContent = 'Preencha o atalho e a nova mensagem.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/atalho', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ atalho, mensagem })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          msg.style.color = 'green';
+          msg.textContent = `Atalho "${atalho}" alterado com sucesso!`;
+          document.getElementById('altAtalho').value = '';
+          document.getElementById('altMensagem').value = '';
+        } else {
+          msg.textContent = data.error || 'Erro ao alterar atalho.';
+        }
+      } catch {
+        msg.textContent = 'Erro ao alterar atalho.';
+      }
+    }
+
+    // --- IMPORTAR CSV ---
+    async function importarCSV() {
+      const input = document.getElementById('importarCsv');
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function (e) {
+        const linhas = e.target.result.split('\n');
+        const resultados = [];
+
+        for (let i = 0; i < linhas.length; i++) {
+          const linha = linhas[i].trim();
+          if (!linha) continue;
+
+          const [atalho, ...mensagemArr] = linha.split(',');
+          const mensagem = mensagemArr.join(',').trim();
+
+          if (!atalho || !mensagem) continue;
+
+          try {
+            const res = await fetch('/api/atalho', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ atalho: atalho.trim(), mensagem })
+            });
+
+            if (res.ok) {
+              resultados.push(`✅ "${atalho}" importado.`);
+            } else {
+              const data = await res.json();
+              resultados.push(`❌ Erro "${atalho}": ${data.error || 'Erro desconhecido'}`);
+            }
+          } catch (err) {
+            resultados.push(`❌ Falha "${atalho}": ${err.message}`);
+          }
+        }
+
+        alert(resultados.join('\n'));
+        input.value = '';
+      };
+
+      reader.readAsText(file);
+    }
   </script>
 </body>
 </html>
