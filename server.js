@@ -43,7 +43,7 @@ app.get('/api/atalhos/:prefixo', (req, res) => {
   const mensagens = lerMensagens();
   const prefixo = req.params.prefixo.toLowerCase();
 
-  // Aqui permite buscar atalhos que contenham o prefixo em qualquer parte da palavra (flexível)
+  // Permite buscar atalhos que contenham o prefixo em qualquer parte da palavra (flexível)
   const resultados = Object.keys(mensagens).filter(a => a.toLowerCase().includes(prefixo));
 
   res.json({ atalhos: resultados });
@@ -134,11 +134,11 @@ app.post('/api/importar-csv', upload.single('file'), (req, res) => {
   fs.createReadStream(csvFilePath)
     .pipe(csv())
     .on('data', (row) => {
-      const atalho = row.Altaho.trim();
-      const mensagem = row.Texto.trim();
+      const atalho = row.Atalho.trim();  // Corrigir "Altaho" para "Atalho"
+      const mensagem = row.Texto.trim(); // Verifique se o nome da coluna "Texto" está correto
 
       if (atalho && mensagem) {
-        mensagens[atalho] = mensagem;
+        mensagens[atalho.toLowerCase()] = mensagem;
         total++;
       }
     })

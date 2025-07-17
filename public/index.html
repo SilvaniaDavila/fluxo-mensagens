@@ -124,11 +124,11 @@
     }
 
     function pesquisarMensagem() {
-      const atalhoPrefixo = document.getElementById("pesqAtalho").value.trim();
+      const atalhoPrefixo = document.getElementById("pesqAtalho").value?.trim();
       
       if (!atalhoPrefixo) return;
 
-      fetch(`/api/atalhos/${atalhoPrefixo}`)
+      fetch(`/api/atalhos/${atalhoPrefixo.toLowerCase()}`)
         .then((response) => response.json())
         .then((data) => {
           const resultados = data.atalhos;

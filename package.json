@@ -4,23 +4,24 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "heroku-postbuild": "echo \"Skipping heroku post build\""
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SilvaniaDavila/fluxo-mensagens.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["fluxo", "mensagens", "api", "node", "express"],
+  "author": "Silvania Davila",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/SilvaniaDavila/fluxo-mensagens/issues"
   },
   "homepage": "https://github.com/SilvaniaDavila/fluxo-mensagens#readme",
-  "description": "",
+  "description": "API para fluxo de mensagens com atalhos e importação de CSV",
   "dependencies": {
     "csv-parser": "^3.2.0",
-    "express": "^4.17.1",
+    "express": "^4.21.2",
     "multer": "^1.4.4"
   }
 }
