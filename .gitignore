@@ -10,5 +10,9 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# Ignorar dados
+dados/
+
+
 # Ignorar arquivos de ambiente
 .env
