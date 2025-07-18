@@ -7,12 +7,12 @@ const csv = require('csv-parser');
 const app = express();
 const PORT = process.env.PORT || 10000;
 const DATA_FILE = path.join(__dirname, 'data', 'mensagens.json');
-const upload = multer({ dest: 'uploads/' });  // Pasta temporária para armazenar o arquivo CSV
+const upload = multer({ dest: 'uploads/' });
 
 app.use(express.static('public'));
 app.use(express.json());
 
-// Função para ler o arquivo JSON de mensagens
+// Funções utilitárias
 function lerMensagens() {
   try {
     const data = fs.readFileSync(DATA_FILE, 'utf8');
@@ -22,120 +22,74 @@ function lerMensagens() {
   }
 }
 
-// Função para salvar mensagens no arquivo JSON
 function salvarMensagens(mensagens) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(mensagens, null, 2), 'utf8');
 }
 
-// Rota para retornar a mensagem do atalho exato
+// Rota: buscar por atalho exato
 app.get('/api/mensagem/:atalho', (req, res) => {
   const mensagens = lerMensagens();
   const atalho = req.params.atalho.toLowerCase();
-  if (mensagens[atalho]) {
-    res.json({ mensagem: mensagens[atalho] });
-  } else {
-    res.status(404).json({ error: 'Atalho não encontrado' });
-  }
+  res.json({ mensagem: mensagens[atalho] || null });
 });
 
-// Rota para listar atalhos que começam com o prefixo (autocomplete flexível)
+// Rota: buscar atalhos por prefixo (flexível)
 app.get('/api/atalhos/:prefixo', (req, res) => {
   const mensagens = lerMensagens();
   const prefixo = req.params.prefixo.toLowerCase();
-
-  // Permite buscar atalhos que contenham o prefixo em qualquer parte da palavra (flexível)
-  const resultados = Object.keys(mensagens).filter(a => a.toLowerCase().includes(prefixo));
-
+  const resultados = Object.keys(mensagens).filter(a => a.includes(prefixo));
   res.json({ atalhos: resultados });
 });
 
-// Rota para adicionar novo atalho
+// Rota: adicionar novo atalho
 app.post('/api/atalho', (req, res) => {
   const { atalho, mensagem } = req.body;
-  if (!atalho || !mensagem) {
-    return res.status(400).json({ error: 'Atalho e mensagem são obrigatórios' });
-  }
+  if (!atalho || !mensagem) return res.status(400).json({ error: 'Atalho e mensagem são obrigatórios' });
+
   const mensagens = lerMensagens();
   const chave = atalho.toLowerCase();
 
-  if (mensagens[chave]) {
-    return res.status(409).json({ error: 'Atalho já existe' });
-  }
+  if (mensagens[chave]) return res.status(409).json({ error: 'Atalho já existe' });
 
   mensagens[chave] = mensagem;
-  try {
-    salvarMensagens(mensagens);
-    res.json({ sucesso: true, atalho: chave });
-  } catch {
-    res.status(500).json({ error: 'Erro ao salvar mensagem' });
-  }
+  salvarMensagens(mensagens);
+  res.json({ sucesso: true, atalho: chave });
 });
 
-// Rota para alterar mensagem de um atalho existente
+// Rota: alterar atalho
 app.put('/api/atalho', (req, res) => {
   const { atalho, mensagem } = req.body;
-  if (!atalho || !mensagem) {
-    return res.status(400).json({ error: 'Atalho e mensagem são obrigatórios' });
-  }
+  if (!atalho || !mensagem) return res.status(400).json({ error: 'Atalho e mensagem são obrigatórios' });
+
   const mensagens = lerMensagens();
   const chave = atalho.toLowerCase();
 
-  if (!mensagens[chave]) {
-    return res.status(404).json({ error: 'Atalho não encontrado para alterar' });
-  }
+  if (!mensagens[chave]) return res.status(404).json({ error: 'Atalho não encontrado' });
 
   mensagens[chave] = mensagem;
-  try {
-    salvarMensagens(mensagens);
-    res.json({ sucesso: true, atalho: chave });
-  } catch {
-    res.status(500).json({ error: 'Erro ao salvar mensagem' });
-  }
+  salvarMensagens(mensagens);
+  res.json({ sucesso: true });
 });
 
-// Rota para renomear um atalho existente
-app.patch('/api/atalho', (req, res) => {
-  const { atalhoAntigo, atalhoNovo } = req.body;
-  if (!atalhoAntigo || !atalhoNovo) {
-    return res.status(400).json({ error: 'Atalho antigo e novo são obrigatórios' });
-  }
-  const mensagens = lerMensagens();
-  const oldKey = atalhoAntigo.toLowerCase();
-  const newKey = atalhoNovo.toLowerCase();
-
-  if (!mensagens[oldKey]) {
-    return res.status(404).json({ error: 'Atalho antigo não encontrado' });
-  }
-  if (mensagens[newKey]) {
-    return res.status(409).json({ error: 'Atalho novo já existe' });
-  }
-
-  mensagens[newKey] = mensagens[oldKey];
-  delete mensagens[oldKey];
-
-  try {
-    salvarMensagens(mensagens);
-    res.json({ sucesso: true, atalhoNovo: newKey });
-  } catch {
-    res.status(500).json({ error: 'Erro ao salvar mensagens' });
-  }
-});
-
-// Rota para importar CSV
+// Rota: importar CSV (robusta com nomes flexíveis)
 app.post('/api/importar-csv', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Nenhum arquivo CSV enviado' });
-  }
+  if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo CSV enviado' });
 
-  const csvFilePath = path.join(__dirname, 'uploads', req.file.filename);
+  const filePath = path.join(__dirname, 'uploads', req.file.filename);
   const mensagens = lerMensagens();
   let total = 0;
 
-  fs.createReadStream(csvFilePath)
+  fs.createReadStream(filePath)
     .pipe(csv())
     .on('data', (row) => {
-      const atalho = row.Atalho.trim();  // Corrigir "Altaho" para "Atalho"
-      const mensagem = row.Texto.trim(); // Verifique se o nome da coluna "Texto" está correto
+      // Normaliza os nomes das colunas
+      const colunas = Object.keys(row).reduce((acc, key) => {
+        acc[key.trim().toLowerCase()] = key;
+        return acc;
+      }, {});
+
+      const atalho = row[colunas["atalho"]]?.trim();
+      const mensagem = row[colunas["texto"]]?.trim();
 
       if (atalho && mensagem) {
         mensagens[atalho.toLowerCase()] = mensagem;
@@ -144,19 +98,24 @@ app.post('/api/importar-csv', upload.single('file'), (req, res) => {
     })
     .on('end', () => {
       salvarMensagens(mensagens);
-      fs.unlinkSync(csvFilePath);  // Apaga o arquivo temporário após o processamento
+      fs.unlinkSync(filePath);
       res.json({ message: 'Importação concluída', total });
     })
     .on('error', (err) => {
-      res.status(500).json({ error: 'Erro ao ler o CSV: ' + err.message });
+      res.status(500).json({ error: 'Erro ao ler CSV: ' + err.message });
     });
 });
 
-// Rota padrão para abrir index.html
+// Rota opcional para debug (ver mensagens carregadas)
+app.get('/api/debug', (req, res) => {
+  res.json(lerMensagens());
+});
+
+// Rota principal
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+  console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
 });
