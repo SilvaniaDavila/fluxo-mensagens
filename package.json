@@ -26,6 +26,7 @@
   "homepage": "https://github.com/SilvaniaDavila/fluxo-mensagens#readme",
   "description": "API para fluxo de mensagens com atalhos e importação de CSV",
   "dependencies": {
+    "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "express": "^4.21.2",
     "multer": "^1.4.4",
