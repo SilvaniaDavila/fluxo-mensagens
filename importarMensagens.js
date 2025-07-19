@@ -1,31 +1,20 @@
-const fs = require('fs');
-const pool = require('./db'); // seu arquivo de conexão com o banco
+const pool = require('./db'); // seu arquivo de conexão com o PG
+const mensagens = require('./data/mensagens.json'); // seu arquivo JSON
 
 async function importarMensagens() {
-  // Ler o arquivo JSON com as mensagens
-  const data = fs.readFileSync('./data/mensagens.json', 'utf8');
-  const mensagens = JSON.parse(data);
-
-  for (const m of mensagens) {
-    const atalho = String(m.Atalho); // converte para texto, para evitar problemas
-    const texto = m.Texto;
-
+  for (const msg of mensagens) {
     try {
-      // Inserir no banco, sem criar duplicados
       await pool.query(
-        `INSERT INTO mensagens (atalho, mensagem)
-         VALUES ($1, $2)
-         ON CONFLICT (atalho) DO NOTHING`, // aqui evita erro se já existir o atalho
-        [atalho, texto]
+        'INSERT INTO mensagens (atalho, mensagem) VALUES ($1, $2)',
+        [msg.atalho, msg.texto]
       );
-      console.log(`Inserido: ${atalho}`);
+      console.log(`Inserido: ${msg.atalho}`);
     } catch (err) {
       console.error('Erro ao inserir:', err);
     }
   }
-
   console.log('Importação concluída!');
-  process.exit();
+  pool.end();
 }
 
 importarMensagens();
