@@ -123,29 +123,24 @@
       document.getElementById(id).classList.add("active");
     }
 
-function pesquisarMensagem() {
-  const atalhoPrefixo = document.getElementById("pesqAtalho").value?.trim();
+    function pesquisarMensagem() {
+      const atalhoPrefixo = document.getElementById("pesqAtalho").value.trim();
+      
+      if (!atalhoPrefixo) return;
 
-  if (!atalhoPrefixo) return;
-
-  fetch(`/api/atalhos/${encodeURIComponent(atalhoPrefixo.toLowerCase())}`)
-    .then((response) => response.json())
-    .then((data) => {
-      const resultados = data.atalhos;
-      if (!resultados.length) {
-        document.getElementById("resultadoPesquisa").value = "Nenhum atalho encontrado.";
-      } else {
-        // Busca as mensagens de todos os atalhos encontrados
-        const mensagens = getMensagens();
-        const linhas = resultados.map(a => `[${a}] ${mensagens[a] || "(mensagem não encontrada)"}`);
-        document.getElementById("resultadoPesquisa").value = linhas.join("\n\n");
-      }
-    })
-    .catch((error) => {
-      document.getElementById("resultadoPesquisa").value = "Erro ao buscar atalhos.";
-    });
-}
-
+      fetch(`/api/atalhos/${atalhoPrefixo}`)
+        .then((response) => response.json())
+        .then((data) => {
+          const resultados = data.atalhos;
+          const resultadoTexto = resultados.length > 0 
+            ? resultados.map(item => `${item.atalho}: ${item.mensagem}`).join("\n") 
+            : "Nenhum atalho encontrado.";
+          document.getElementById("resultadoPesquisa").value = resultadoTexto;
+        })
+        .catch((error) => {
+          document.getElementById("resultadoPesquisa").value = "Erro ao buscar atalhos.";
+        });
+    }
 
     function getMensagens() {
       return JSON.parse(localStorage.getItem("mensagens") || "{}");
