@@ -1,133 +1,107 @@
 const express = require('express');
+const cors = require('cors');
+const pool = require('./db');
+const multer = require('multer');
+const csv = require('csv-parser');
+const fs = require('fs');
 const path = require('path');
-const pool = require('./db'); // usa a conexão do db.js
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = 3000;
 
-app.use(express.static('public'));
+app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
-// 🔍 GET mensagem por atalho exato
+const upload = multer({ dest: 'uploads/' });
+
+// Buscar mensagem por atalho
 app.get('/api/mensagem/:atalho', async (req, res) => {
-  const atalho = req.params.atalho.toLowerCase();
+  const atalho = req.params.atalho;
   try {
-    const result = await pool.query(
-      'SELECT mensagem FROM mensagens WHERE LOWER(atalho) = $1',
-      [atalho]
-    );
+    const result = await pool.query('SELECT texto FROM mensagens WHERE atalho = $1', [atalho]);
     if (result.rows.length > 0) {
-      res.json({ mensagem: result.rows[0].mensagem });
+      res.json({ mensagem: result.rows[0].texto });
     } else {
-      res.status(404).json({ error: 'Atalho não encontrado' });
+      res.json({ mensagem: 'Mensagem não encontrada.' });
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao buscar mensagem' });
   }
 });
 
-// 🔍 GET lista de atalhos por prefixo (autocomplete flexível)
-app.get('/api/atalhos/:prefixo', async (req, res) => {
-  const prefixo = req.params.prefixo.toLowerCase();
+// Adicionar nova mensagem
+app.post('/api/adicionar', async (req, res) => {
+  const { atalho, texto } = req.body;
   try {
-    const result = await pool.query(
-      "SELECT atalho FROM mensagens WHERE LOWER(atalho) LIKE '%' || $1 || '%'",
-      [prefixo]
-    );
-    const atalhos = result.rows.map(row => row.atalho);
-    res.json({ atalhos });
+    await pool.query('INSERT INTO mensagens (atalho, texto) VALUES ($1, $2)', [atalho, texto]);
+    res.json({ sucesso: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao adicionar mensagem' });
   }
 });
 
-// ➕ POST novo atalho
-app.post('/api/atalho', async (req, res) => {
-  const { atalho, mensagem } = req.body;
-  if (!atalho || !mensagem) {
-    return res.status(400).json({ error: 'Atalho e mensagem são obrigatórios' });
-  }
-
+// Alterar mensagem
+app.put('/api/alterar/:atalho', async (req, res) => {
+  const { texto } = req.body;
+  const atalho = req.params.atalho;
   try {
-    const exists = await pool.query(
-      'SELECT id FROM mensagens WHERE LOWER(atalho) = $1',
-      [atalho.toLowerCase()]
-    );
-
-    if (exists.rows.length > 0) {
-      return res.status(409).json({ error: 'Atalho já existe' });
-    }
-
-    await pool.query(
-      'INSERT INTO mensagens (atalho, mensagem) VALUES ($1, $2)',
-      [atalho, mensagem]
-    );
-    res.json({ sucesso: true, atalho });
+    await pool.query('UPDATE mensagens SET texto = $1 WHERE atalho = $2', [texto, atalho]);
+    res.json({ sucesso: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao alterar mensagem' });
   }
 });
 
-// ✏️ PUT alterar mensagem de um atalho existente
-app.put('/api/atalho', async (req, res) => {
-  const { atalho, mensagem } = req.body;
-  if (!atalho || !mensagem) {
-    return res.status(400).json({ error: 'Atalho e mensagem são obrigatórios' });
-  }
+// Importar CSV
+app.post('/api/importar', upload.single('arquivo'), async (req, res) => {
+  const filePath = req.file.path;
+  const mensagens = [];
 
+  fs.createReadStream(filePath)
+    .pipe(csv())
+    .on('data', (data) => {
+      mensagens.push(data);
+    })
+    .on('end', async () => {
+      try {
+        for (const msg of mensagens) {
+          await pool.query(
+            'INSERT INTO mensagens (atalho, texto) VALUES ($1, $2) ON CONFLICT (atalho) DO UPDATE SET texto = EXCLUDED.texto',
+            [msg.atalho, msg.texto]
+          );
+        }
+        fs.unlinkSync(filePath); // Apaga o arquivo temporário
+        res.json({ sucesso: true });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ erro: 'Erro ao importar CSV' });
+      }
+    });
+});
+
+// Exportar CSV
+app.get('/api/exportar', async (req, res) => {
   try {
-    const result = await pool.query(
-      'UPDATE mensagens SET mensagem = $1 WHERE LOWER(atalho) = $2',
-      [mensagem, atalho.toLowerCase()]
-    );
+    const resultado = await pool.query('SELECT * FROM mensagens');
+    const csvData = ['atalho,texto\n', ...resultado.rows.map(r => `${r.atalho},"${r.texto.replace(/"/g, '""')}"\n`)].join('');
+    
+    const filePath = path.join(__dirname, 'mensagens_exportadas.csv');
+    fs.writeFileSync(filePath, csvData);
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Atalho não encontrado' });
-    }
-
-    res.json({ sucesso: true, atalho });
+    res.download(filePath, 'mensagens.csv', (err) => {
+      if (err) console.error(err);
+      fs.unlinkSync(filePath);
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao exportar CSV' });
   }
 });
 
-// 🔁 PATCH renomear um atalho
-app.patch('/api/atalho', async (req, res) => {
-  const { atalhoAntigo, atalhoNovo } = req.body;
-  if (!atalhoAntigo || !atalhoNovo) {
-    return res.status(400).json({ error: 'Atalho antigo e novo são obrigatórios' });
-  }
-
-  try {
-    const existeNovo = await pool.query(
-      'SELECT id FROM mensagens WHERE LOWER(atalho) = $1',
-      [atalhoNovo.toLowerCase()]
-    );
-    if (existeNovo.rows.length > 0) {
-      return res.status(409).json({ error: 'Atalho novo já existe' });
-    }
-
-    const result = await pool.query(
-      'UPDATE mensagens SET atalho = $1 WHERE LOWER(atalho) = $2',
-      [atalhoNovo, atalhoAntigo.toLowerCase()]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Atalho antigo não encontrado' });
-    }
-
-    res.json({ sucesso: true, atalhoNovo });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Página inicial
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Inicia o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
